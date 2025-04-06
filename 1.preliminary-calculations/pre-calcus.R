@@ -1,31 +1,53 @@
+# Creation of data perturbation files (except predation accessibility)
+# Creation date : 2025-03-12 (Yansong Huang)
+# Author : Criscely Lujan, Yansong Huang
 
 # Scripts -----------------------------------------------------------------------
-
-source("auxiliar.R")
+library(osmose)
+source("1.preliminary-calculations/auxiliar.R")
 
 # Config ------------------------------------------------------------------------
+# 物种列表
+species_list <- c(
+  "lesserSpottedDogfish", "redMullet", "pouting", "whiting", "poorCod", "cod", "dragonet", "sole",
+  "plaice", "horseMackerel", "mackerel", "herring", "sardine", "squids", "cuttlefish", "thornbackRay"
+)
 
-modelConfig  = file.path("config", "osmose_hum.csv")
-modelConfig  = read.csv(file = modelConfig, header = TRUE, sep = ",", stringsAsFactors = FALSE)
+# 读取配置数据
+config_dir  = "osmose-eec"
+main_file = "eec_all-parameters.R"
+config_file = file.path(config_dir, main_file)
+conf = read_osmose(input=config_file)
+# # 读取配置数据
+# predation_access_matrix <- read.csv("2.get-doe/config_osmose_eec/predation-accessibility.csv", header = TRUE, row.names = 1)
+
+
 
 # Process -----------------------------------------------------------------------
+# 1 predation accessibility
+# see another script "" 
 
-# 2-3. F1-F2: Predation size ratios (min, max) ----------------------------------
 
-getAngles = function(sp, stages){
+# 2-3. Predation size ratios (min, max) ----------------------------------
+# list of ratios for all species
+pred_ratio_max_all_sp <- get_par(conf, "predation.predprey.sizeratio.max")
+pred_ratio_min_all_sp <- get_par(conf, "predation.predprey.sizeratio.min")
+
+
+getAngles = function(sp){
   
-  max = as.numeric(as.vector(modelConfig[modelConfig[,1] == paste0("predation.predPrey.sizeRatio.max.", sp), (stages + 1)]))
-  min = as.numeric(as.vector(modelConfig[modelConfig[,1] == paste0("predation.predPrey.sizeRatio.min.", sp), (stages + 1)]))
+  max = get_par(pred_ratio_max_all_sp,sp=sp)
+  min = get_par(pred_ratio_min_all_sp,sp=sp)
   
   theta.stage1 = angleEstimation(m_min = 0, m_max = 1/min[1])
   alpha.stage1 = angleEstimation(m_min = 0, m_max = 1/max[1]) - theta.stage1
   
-  if(length(stages) == 1){
+  if(length(max) == 1){
     return(c( theta.stage1/(pi/2),
               alpha.stage1/((pi/2)-theta.stage1) ))
   }
   
-  if(length(stages) == 2){
+  if(length(max) == 2){
     theta.stage2 = angleEstimation(m_min = 0, m_max = 1/min[2])
     alpha.stage2 = angleEstimation(m_min = 0, m_max = 1/max[2]) - theta.stage2
     
@@ -35,134 +57,213 @@ getAngles = function(sp, stages){
               alpha.stage2/((pi/2)-theta.stage2) ))
   }
   
-  if(length(stages) == 3){
-    
-    theta.stage2 = angleEstimation(m_min = 0, m_max = 1/min[2])
-    alpha.stage2 = angleEstimation(m_min = 0, m_max = 1/max[2]) - theta.stage2
-    
-    theta.stage3 = angleEstimation(m_min = 0, m_max = 1/min[3])
-    alpha.stage3 = angleEstimation(m_min = 0, m_max = 1/max[3]) - theta.stage3
-    
-    return(c( theta.stage1/(pi/2),
-              alpha.stage1/((pi/2)-theta.stage1),
-              theta.stage2/(pi/2), 
-              alpha.stage2/((pi/2)-theta.stage2), 
-              theta.stage3/(pi/2),
-              alpha.stage3/((pi/2)-theta.stage3) ))
-  }
-  
 }
 
-angles.sp0 = getAngles(sp = "sp0", stages = c(1,2))
-angles.sp1 = getAngles(sp = "sp1", stages = c(1,2))
-angles.sp2 = getAngles(sp = "sp2", stages = c(1,2))
-angles.sp3 = getAngles(sp = "sp3", stages = c(1,2))
-angles.sp4 = getAngles(sp = "sp4", stages = c(1,2))
-angles.sp5 = getAngles(sp = "sp5", stages = c(1))
-angles.sp6 = getAngles(sp = "sp6", stages = c(1))
-angles.sp7 = getAngles(sp = "sp7", stages = c(1,2,3))
-angles.sp8 = getAngles(sp = "sp8", stages = c(1,2))
+# 使用 lapply 获取角度
+angles_list <- lapply(0:15, getAngles)
 
-sizeRatios = matrix(c(angles.sp0, angles.sp1, angles.sp2,
-                      angles.sp3, angles.sp4, angles.sp5,
-                      angles.sp6, angles.sp7, angles.sp8))
+# 构造矩阵
+sizeRatios <- matrix(unlist(angles_list), ncol = 1, byrow = TRUE)
+sizeRatios = round(sizeRatios, 8)
 
-rownames(sizeRatios) = c(paste(paste0("sp0_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"),
-                         paste(paste0("sp1_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"),
-                         paste(paste0("sp2_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"),
-                         paste(paste0("sp3_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"),
-                         paste(paste0("sp4_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"),
-                         paste(paste0("sp5_", c("teta", "alpha")), rep(c("stage1"), times = 2), sep = "_"),
-                         paste(paste0("sp6_", c("teta", "alpha")), rep(c("stage1"), times = 2), sep = "_"),
-                         paste(paste0("sp7_", c("teta", "alpha")), rep(c("stage1", "stage2", "stage3"), each = 2), sep = "_"),
-                         paste(paste0("sp8_", c("teta", "alpha")), rep(c("stage1", "stage2"), each = 2), sep = "_"))
-sizeRatios[,1] = round(sizeRatios[,1], 8)
+# 生成参数名
+pred_ratio_names <- unlist(lapply(0:15, function(sp) {
+  stages <- if (sp == 5) c("stage1", "stage2") else c("stage1")
+  paste0("predation.predPrey.sizeRatio.",rep(c("teta", "alpha"), each = length(stages)),".sp",
+    sp,".",rep(stages, times = 2))
+}))
 
-write.csv(sizeRatios, "1.preliminary-calculations/csv/sizeRatios.csv")
+# 加入其他信息，整理表格
+pred_ratio_table <- data.frame(
+  parameter = pred_ratio_names,
+  value = sizeRatios,
+  scale = rep("logit", 34)
+)
 
 
-# 4.   F3: Predation stage threshold ---------------------------------------------
+write.table(
+  pred_ratio_table,
+  "1.preliminary-calculations/csv/sizeRatios.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 
-s0_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp0", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp0", 2])
-s1_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp1", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp1", 2])
-s2_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp2", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp2", 2])
-s3_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp3", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp3", 2])
-s4_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp4", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp4", 2])
-s8_frac   = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp8", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp8", 2])
+# 5. Starvation mortality --------------------------------------------
+starvation_mortality_all_sp <- get_par(conf,"mortality.starvation.rate.max")
 
-s7_s1 = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp7", 2])
-s7_s2 = as.numeric(modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp7", 3])
-Linf.sp7  = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp7", 2])
+# 生成参数名
+starvation_mortality_names <- unlist(lapply(0:15, function(sp) {
+  paste0("mortality.starvation.rate.max.sp",sp)
+}))
 
-s7_s1_frac = s7_s1 / Linf.sp7
-s7_s2_frac = s7_s2 / Linf.sp7
+# 加入其他信息，整理表格
+starvation_mortality_table <- data.frame(
+  parameter = starvation_mortality_names,
+  value = as.numeric(starvation_mortality_all_sp),
+  scale = rep("log", 16)
+)
 
-s7_ratio = s7_s1 / s7_s2
 
-sizeThreshold = matrix(c(s0_frac ,
-                         s1_frac ,
-                         s2_frac ,
-                         s3_frac ,
-                         s4_frac ,
-                         s7_s2_frac, s7_ratio,
-                         s8_frac))
-
-rownames(sizeThreshold) = c("s0_frac",
-                            "s1_frac",
-                            "s2_frac",
-                            "s3_frac",
-                            "s4_frac",
-                            "s7_s2_frac", "s7_ratio",
-                            "s8_frac")
-
-sizeThreshold[,1] = round(sizeThreshold[,1], 8)
-
-write.csv(sizeThreshold, "1.preliminary-calculations/csv/sizeThreshold.csv")
+write.table(
+  starvation_mortality_table,
+  "1.preliminary-calculations/csv/starvationMortality.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 
 # 6.   F4: von Bertalanffy threshold --------------------------------------------
+# Exclude thornback ray (sp15), for which vb threshold=0
+vbThrs_all_sp <- get_par(conf, "species.vonbertalanffy.threshold.age")
+lifeSpan_all_sp <- get_par(conf, "species.lifespan") 
+vbThrs_reparam = as.numeric(vbThrs_all_sp) / as.numeric(lifeSpan_all_sp)
+vbThrs_reparam = round(vbThrs_reparam, 8)
 
-vbThrs_sp0 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp0", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp0", 2])
-vbThrs_sp1 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp1", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp1", 2])
-vbThrs_sp2 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp2", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp2", 2])
-vbThrs_sp3 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp3", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp3", 2])
-vbThrs_sp4 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp4", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp4", 2])
-vbThrs_sp5 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp5", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp5", 2])
-vbThrs_sp6 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp6", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp6", 2])
-vbThrs_sp7 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp7", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp7", 2])
-vbThrs_sp8 = as.numeric(modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp8", 2]) / as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp8", 2])
 
-vbThreshold = matrix(c(vbThrs_sp0, vbThrs_sp1, vbThrs_sp2,
-                       vbThrs_sp3, vbThrs_sp4, vbThrs_sp5,
-                       vbThrs_sp6, vbThrs_sp7, vbThrs_sp8))
+# 生成参数名
+# exclude thornback ray (sp15), for which vb threshold=0
+vbThreshold_names <- unlist(lapply(0:14, function(sp) {
+  paste0("species.vonbertalanffy.threshold.age.sp",sp)
+}))
 
-rownames(vbThreshold) = paste0("sp", c(0:8))
+# 加入其他信息，整理表格
+vbThreshold_table <- data.frame(
+  parameter = vbThreshold_names,
+  value = vbThrs_reparam[-16],
+  scale = rep("logit", 15)
+)
 
-vbThreshold[,1] = round(vbThreshold[,1], 8)
+write.table(
+  vbThreshold_table,
+  "1.preliminary-calculations/csv/vbThreshold.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 
 write.csv(vbThreshold, "1.preliminary-calculations/csv/vbThreshold.csv")
 
-# 11.  Larval mortality rate: no parametrization ---------------------------------
+# 7. Egg size --------------------------------------------
+egg_size_all_sp <- get_par(conf,"species.egg.size")
 
-larvaMortality.sp0 = read.csv(file = "config/larval/larval_mortality-anchovy.csv"    , header = TRUE, sep = ";")
-larvaMortality.sp1 = read.csv(file = "config/larval/larval_mortality-hake.csv"       , header = TRUE, sep = ";")
-larvaMortality.sp2 = read.csv(file = "config/larval/larval_mortality-sardine.csv"    , header = TRUE, sep = ";")
-larvaMortality.sp3 = read.csv(file = "config/larval/larval_mortality-jurel.csv"      , header = TRUE, sep = ";")
-larvaMortality.sp4 = read.csv(file = "config/larval/larval_mortality-caballa.csv"    , header = TRUE, sep = ";")
-larvaMortality.sp5 = read.csv(file = "config/larval/larval_mortality-meso.csv"       , header = TRUE, sep = ";")
-larvaMortality.sp6 = read.csv(file = "config/larval/larval_mortality-munida.csv"     , header = TRUE, sep = ";")
-larvaMortality.sp7 = read.csv(file = "config/larval/larval_mortality-pota.csv"       , header = TRUE, sep = ";")
-larvaMortality.sp8 = read.csv(file = "config/larval/larval_mortality-euphausidos.csv", header = TRUE, sep = ";")
+# 生成参数名
+egg_size_names <- unlist(lapply(0:15, function(sp) {
+  paste0("species.egg.size.sp",sp)
+}))
 
-larvaMortality.sp0 = larvaMortality.sp0$x
-larvaMortality.sp1 = larvaMortality.sp1$x
-larvaMortality.sp2 = larvaMortality.sp2$x
-larvaMortality.sp3 = larvaMortality.sp3$x
-larvaMortality.sp4 = larvaMortality.sp4$x
-larvaMortality.sp5 = larvaMortality.sp5$x
-larvaMortality.sp6 = larvaMortality.sp6$x
-larvaMortality.sp7 = larvaMortality.sp7$x
-larvaMortality.sp8 = larvaMortality.sp8$x
+# 加入其他信息，整理表格
+egg_size_table <- data.frame(
+  parameter = egg_size_names,
+  value = as.numeric(egg_size_all_sp),
+  scale = rep("log", 16)
+)
 
+
+write.table(
+  egg_size_table,
+  "1.preliminary-calculations/csv/eggSize.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+# 8. Critical threshold of predation efficiency --------------------------------------------
+crit_pred_effic_all_sp <- get_par(conf,"predation.efficiency.critical")
+
+# 生成参数名
+crit_pred_effic_names <- unlist(lapply(0:15, function(sp) {
+  paste0("predation.efficiency.critical.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+crit_pred_effic_table <- data.frame(
+  parameter = crit_pred_effic_names,
+  value = as.numeric(crit_pred_effic_all_sp),
+  scale = rep("logit", 16)
+)
+
+
+write.table(
+  crit_pred_effic_table,
+  "1.preliminary-calculations/csv/critPredEffic.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+# 9. Maximum rate of predation ingestion --------------------------------------------
+predation_ingestion_all_sp <- get_par(conf,"predation.ingestion.rate.max")
+
+# 生成参数名
+predation_ingestion_names <- unlist(lapply(0:15, function(sp) {
+  paste0("predation.ingestion.rate.max.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+predation_ingestion_table <- data.frame(
+  parameter = predation_ingestion_names,
+  value = as.numeric(predation_ingestion_all_sp),
+  scale = rep("log", 16)
+)
+
+
+write.table(
+  predation_ingestion_table,
+  "1.preliminary-calculations/csv/predationIngestion.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+
+# 10. Additional natural mortality rate --------------------------------------------
+additional_mortality_all_sp <- get_par(conf,"mortality.additional.rate")
+
+# 生成参数名
+additional_mortality_names <- unlist(lapply(0:15, function(sp) {
+  paste0("mortality.natural.rate.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+additional_mortality_table <- data.frame(
+  parameter = additional_mortality_names,
+  value = as.numeric(additional_mortality_all_sp),
+  scale = rep("log", 16)
+)
+
+
+write.table(
+  additional_mortality_table,
+  "1.preliminary-calculations/csv/additionalMortality.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+# 11.  Larval mortality rate ---------------------------------
+
+# larval mortalities of all species but sole and plaice
+larval_mortality_all_sp <- get_par(conf,"mortality.additional.larva.rate")[1:14]
+
+# larval mortalities of sole and plaice are provided in files
+larval_mortality_dir <- file.path(config_dir,"input/mortality")
+larval_mortality_file_sp7 <- file.path(larval_mortality_dir, "larval_mortality-sole.csv")
+larval_mortality_file_sp8 <- file.path(larval_mortality_dir, "larval_mortality-plaice.csv")
+larval_mortality_sp7 = read.csv(larval_mortality_file_sp7,col.names = c("time","value"))
+larval_mortality_sp8 = read.csv(larval_mortality_file_sp8,col.names = c("time","value"))
+
+# 某种取平均值的运算
 get_mlx = function(larvalVector){
   
   lx  = log(larvalVector)
@@ -172,32 +273,118 @@ get_mlx = function(larvalVector){
   return(Lx)
 }
 
-Lx_sp0 = get_mlx(larvaMortality.sp0)
-Lx_sp1 = get_mlx(larvaMortality.sp1)
-Lx_sp2 = get_mlx(larvaMortality.sp2)
-Lx_sp3 = get_mlx(larvaMortality.sp3)
-Lx_sp4 = get_mlx(larvaMortality.sp4)
-Lx_sp5 = get_mlx(larvaMortality.sp5)
-Lx_sp6 = get_mlx(larvaMortality.sp6)
-Lx_sp7 = get_mlx(larvaMortality.sp7)
-Lx_sp8 = get_mlx(larvaMortality.sp8)
+Lx_sp7 = get_mlx(larval_mortality_sp7$value)
+Lx_sp8 = get_mlx(larval_mortality_sp8$value)
 
-larvalMortality = matrix(c(Lx_sp0, Lx_sp1, Lx_sp2,
-                           Lx_sp3, Lx_sp4, Lx_sp5,
-                           Lx_sp6, Lx_sp7, Lx_sp8))
+larvalMortality = c(unlist(larval_mortality_all_sp),Lx_sp7,Lx_sp8)
+larvalMortality = round(larvalMortality, 8)
 
-rownames(larvalMortality) = paste0("sp", c(0:8))
-larvalMortality[,1] = round(larvalMortality[,1], 8)
+# 生成参数名
+# sole (sp7) and plaice (sp8) were placed at last
+larvalMortality_names_1 <- unlist(lapply(c(0:6,9:15), function(sp) {
+  paste0("mortality.natural.larva.rate.sp",sp)
+}))
+larvalMortality_names_2 <- unlist(lapply(7:8, function(sp) {
+  paste0("mortality.natural.larva.rate.sp",sp)
+}))
+larvalMortality_names <- c(larvalMortality_names_1,larvalMortality_names_2)
 
-write.csv(larvalMortality, "1.preliminary-calculations/csv/larvalMortality.csv")  
-  
+# 加入其他信息，整理表格
+larvalMortality_table <- data.frame(
+  parameter = larvalMortality_names,
+  value = larvalMortality,
+  scale = rep("log", 16)
+)
+
+# 写入文档
+write.table(
+  vbThreshold_table,
+  "1.preliminary-calculations/csv/larvalMortality.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+# 12. catchability -----------------------------------------------------------------------
+catchability_all_sp <- get_par(conf, par="osmose.user.catchability")
+catchability_all_fl <- get_par(conf, par="fisheries.rate.base")
+fishing_dir <- file.path(config_dir,"input/fishing")
+catchability_file <- file.path(fishing_dir, "eec_fisheries_catchability.csv")
+
+catchability.matrix = read.csv(catchability_file, check.names = FALSE, row.names = 1)
+# 生成参数名
+catchability_species_names <- names(catchability_all_sp)
+catchability_species_names <- gsub("osmose\\.user", "species", catchability_species_names)
+catchability_fleet_names <- unlist(lapply(0:3, function(fsh) {
+  paste0("fleet.catchability.fsh3.",fsh)
+}))
+
+catchability_species_values <- c(catchability.matrix[c(1:4,6,8:11,14:16),1],
+                                 catchability.matrix[10:13,2],
+                                 catchability.matrix[c(1,6,8,9),1],
+                                 catchability.matrix[setdiff(1:16, c(5, 7)),4])
+
+# 把两类可捕捞性参数整理为一个表格
+catchability_table <- data.frame(
+  parameter = c(catchability_fleet_names,catchability_species_names),
+  value = c(as.numeric(catchability_all_fl),catchability_species_values),
+  scale = rep("log", 38) # chose log because catchability could be greater than 1
+)
+
+
+write.table(
+  catchability_table,
+  "1.preliminary-calculations/csv/catchability.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+
+# 13. Sex ratio --------------------------------------------
+sex_ratio_all_sp <- get_par(conf,"species.sexratio")
+
+# 生成参数名
+sex_ratio_names <- unlist(lapply(0:15, function(sp) {
+  paste0("species.sexratio.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+sex_ratio_table <- data.frame(
+  parameter = sex_ratio_names,
+  value = as.numeric(sex_ratio_all_sp),
+  scale = rep("logit", 16)
+)
+
+
+write.table(
+  sex_ratio_table,
+  "1.preliminary-calculations/csv/sexRatio.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
+
+
 # 14.  L0 -----------------------------------------------------------------------
+# 读取配置数据
+t0_all_sp <- get_par(conf,"species.t0")
+K_all_sp <- get_par(conf,"species.k")
+Linf_all_sp <- get_par(conf,"species.linf")
 
+# 方程计算vb生长起始体长
 getL0 = function(sp){
   
-  t0    = as.numeric(modelConfig[modelConfig[,1] == paste0("species.t0."  , sp), 2])
-  k     = as.numeric(modelConfig[modelConfig[,1] == paste0("species.K."   , sp), 2])  
-  Linf  = as.numeric(modelConfig[modelConfig[,1] == paste0("species.lInf.", sp), 2])  
+  t0    = get_par(t0_all_sp,sp=sp)
+  k     = get_par(K_all_sp,sp=sp)
+  Linf  = get_par(Linf_all_sp,sp=sp)
   t = 0
   
   l0 = Linf*(1 - exp(-k * (t - t0)))
@@ -205,78 +392,147 @@ getL0 = function(sp){
   return(l0)
 }
 
-l0_sp0 = getL0(sp = "sp0") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp0", 2])
-l0_sp1 = getL0(sp = "sp1") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp1", 2])
-l0_sp2 = getL0(sp = "sp2") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp2", 2])
-l0_sp3 = getL0(sp = "sp3") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp3", 2])
-l0_sp4 = getL0(sp = "sp4") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp4", 2])
-l0_sp5 = getL0(sp = "sp5") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp5", 2])
-l0_sp6 = getL0(sp = "sp6") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp6", 2])
-l0_sp7 = getL0(sp = "sp7") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp7", 2])
-l0_sp8 = getL0(sp = "sp8") / as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp8", 2])
+# 调用方程计算vb生长起始体长，并除以最大体长
 
-l0 = matrix(c(l0_sp0, l0_sp1, l0_sp2,
-              l0_sp3, l0_sp4, l0_sp5,
-              l0_sp6, l0_sp7, l0_sp8))
+L0_list <- lapply(0:15, getL0)
+L0_reparam = as.numeric(L0_list) / as.numeric(Linf_all_sp)
+L0_reparam = round(L0_reparam, 8)
+# exclude squids (sp13) and cuttlefish (sp14), for which t0=0
+L0_reparam <- L0_reparam[-c(14:15)]
 
-rownames(l0) = paste0("sp", c(0:8))
+# 生成参数名
+# exclude squids (sp13) and cuttlefish (sp14), for which t0=0
+L0_names <- unlist(lapply(c(0:12,15), function(sp) {
+  paste0("species.L0.sp",sp) # Yansong: modified lower case l to L
+}))
 
-l0[,1] = round(l0[,1], 8)
 
-write.csv(l0, "1.preliminary-calculations/csv/l0.csv")
+# 加入其他信息，整理表格
+L0_table <- data.frame(
+  parameter = L0_names,
+  value = L0_reparam,
+  scale = rep("logit", 14)
+)
+
+# 写入文档
+write.table(
+  vbThreshold_table,
+  "1.preliminary-calculations/csv/L0.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+# 15.K (von bertalanffy)                       :  --------------------------
+# K is not re-parametrized 
+# 配置数据已经读取
+# 生成参数名
+K_names <- unlist(lapply(c(0:15), function(sp) {
+  paste0("species.K.sp",sp) 
+}))
+
+
+# 加入其他信息，整理表格
+K_table <- data.frame(
+  parameter = K_names,
+  value = as.numeric(K_all_sp),
+  scale = rep("log", 16)
+)
+
+# 写入文档
+write.table(
+  K_table,
+  "1.preliminary-calculations/csv/K.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 
 # 16.  Linf (von bertalanffy)                       :  --------------------------
 # Linf is not re-parametrized 
-
-# 17.  F5: Size at maturity -----------------------------------------------------
-
-smat_sp0 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp0", 2])
-smat_sp1 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp1", 2])
-smat_sp2 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp2", 2])
-smat_sp3 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp3", 2])
-smat_sp4 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp4", 2])
-smat_sp5 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp5", 2])
-smat_sp6 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp6", 2])
-smat_sp7 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp7", 2])
-smat_sp8 = as.numeric(modelConfig[modelConfig[,1] == "species.maturity.size.sp8", 2])
-
-linf_sp0 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp0", 2])
-linf_sp1 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp1", 2])
-linf_sp2 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp2", 2])
-linf_sp3 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp3", 2])
-linf_sp4 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp4", 2])
-linf_sp5 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp5", 2])
-linf_sp6 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp6", 2])
-linf_sp7 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp7", 2])
-linf_sp8 = as.numeric(modelConfig[modelConfig[,1] == "species.lInf.sp8", 2])
-
-l0_sp0 = getL0(sp = "sp0") 
-l0_sp1 = getL0(sp = "sp1")
-l0_sp2 = getL0(sp = "sp2")
-l0_sp3 = getL0(sp = "sp3")
-l0_sp4 = getL0(sp = "sp4")
-l0_sp5 = getL0(sp = "sp5")
-l0_sp6 = getL0(sp = "sp6")
-l0_sp7 = getL0(sp = "sp7")
-l0_sp8 = getL0(sp = "sp8")
+# 配置数据已经读取
+# 生成参数名
+Linf_names <- unlist(lapply(c(0:15), function(sp) {
+  paste0("species.Linf.sp",sp) # Yansong: modified lower case l to L
+}))
 
 
-sx_sp0   = (smat_sp0 - l0_sp0)/(linf_sp0 - l0_sp0)
-sx_sp1   = (smat_sp1 - l0_sp1)/(linf_sp1 - l0_sp1)
-sx_sp2   = (smat_sp2 - l0_sp2)/(linf_sp2 - l0_sp2)
-sx_sp3   = (smat_sp3 - l0_sp3)/(linf_sp3 - l0_sp3)
-sx_sp4   = (smat_sp4 - l0_sp4)/(linf_sp4 - l0_sp4)
-sx_sp5   = (smat_sp5 - l0_sp5)/(linf_sp5 - l0_sp5)
-sx_sp6   = (smat_sp6 - l0_sp6)/(linf_sp6 - l0_sp6)
-sx_sp7   = (smat_sp7 - l0_sp7)/(linf_sp7 - l0_sp7)
-sx_sp8   = (smat_sp8 - l0_sp8)/(linf_sp8 - l0_sp8)
+# 加入其他信息，整理表格
+Linf_table <- data.frame(
+  parameter = Linf_names,
+  value = as.numeric(Linf_all_sp),
+  scale = rep("log", 16)
+)
 
-sx       = matrix(c(sx_sp0, sx_sp1, sx_sp2,
-                    sx_sp3, sx_sp4, sx_sp5,
-                    sx_sp6, sx_sp7, sx_sp8))
+# 写入文档
+write.table(
+  Linf_table,
+  "1.preliminary-calculations/csv/Linf.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 
-rownames(sx) = paste0("sp", c(0:8))
 
-sx[,1] = round(sx[,1], 8)
+# 17. Size at maturity -----------------------------------------------------
+# 读取配置数据
+maturity_size_all_species <- get_par(conf,"species.maturity.size")
 
-write.csv(sx, "1.preliminary-calculations/csv/sx.csv")
+# 重参数化
+maturity_size_reparam   = (as.numeric(maturity_size_all_species) - as.numeric(L0_list))/(as.numeric(Linf_all_sp) - as.numeric(L0_list))
+maturity_size_reparam = round(maturity_size_reparam, 8)
+
+
+# 生成参数名
+maturity_size_names <- unlist(lapply(c(0:15), function(sp) {
+  paste0("species.maturity.size.sp",sp) # Yansong: modified lower case l to L
+}))
+
+# 加入其他信息，整理表格
+maturity_size_table <- data.frame(
+  parameter = maturity_size_names,
+  value = as.numeric(maturity_size_reparam),
+  scale = rep("logit", 16)
+)
+
+# 写入文档
+write.table(
+  maturity_size_table,
+  "1.preliminary-calculations/csv/maturity_size.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+write.csv(sx, "1.preliminary-calculations/csv/maturity_size.csv")
+
+# 18. Constant of proportionality of the allometric length−weight relationship --------------------------------------------
+constant_allometric_all_sp <- get_par(conf,"species.length2weight.condition.factor")
+
+# 生成参数名
+constant_allometric_names <- unlist(lapply(0:15, function(sp) {
+  paste0("species.length2weight.condition.factor.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+constant_allometric_table <- data.frame(
+  parameter = constant_allometric_names,
+  value = as.numeric(constant_allometric_all_sp),
+  scale = rep("log", 16)
+)
+
+
+write.table(
+  constant_allometric_table,
+  "1.preliminary-calculations/csv/constantAllometric.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
+
+
