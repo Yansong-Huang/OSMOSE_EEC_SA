@@ -42,7 +42,17 @@ run_model = function(par,names, ...) {
   output_temp = "output_temp"
   
   # Yansong: modify configuration according to doe
+  conf_names <- names(conf)
+  par_names  <- names(par)
   
+  # 取交集，直接替换以下参数
+  # mortality.additional.rate mortality.additional.larva.rate(except sp7 sp8)
+  # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
+  # species.sexratio species.k species.length2weight.condition.factor species.linf
+  common_names <- intersect(conf_names, par_names)
+  
+  # 用名字赋值，确保一一对应
+  conf[common_names] <- par[common_names]
   
   # Manually changes about PREDATION ACCESSIBILITY
   # predationAccessibility = read.csv(file.path(configDir, "input/predation-accessibility.csv"), stringsAsFactors = FALSE, sep = ",")
@@ -79,38 +89,6 @@ run_model = function(par,names, ...) {
   # modelConfig[modelConfig[,1] == "predation.predPrey.sizeRatio.min.sp0", c(2,3)] = c(min.sp0.stage1, min.sp0.stage2)
   # 
   
-  # # PredPrey stage threshold
-  # Linf.sp0.per = par[names(par) == "species.lInf.sp0"]
-  # modelConfig[modelConfig[,1] == "predation.predPrey.stage.threshold.sp0", 2]    = par[names(par) == "predation.predPrey.stage.threshold.sp0"] * (Linf.sp0.per)
-  
-  
-  # # Starvation rate max
-  # modelConfig[modelConfig[,1] == "mortality.starvation.rate.max.sp0", 2]         = par[names(par) == "mortality.starvation.rate.max.sp0"]
-  
-  
-  # # vonBertalanffy threshold
-  # amax.sp0 = as.numeric(modelConfig[modelConfig[,1] == "species.lifespan.sp0", 2])
-  # modelConfig[modelConfig[,1] == "species.vonbertalanffy.threshold.age.sp0", 2]  = par[names(par) == "species.vonbertalanffy.threshold.age.sp0"] * (amax.sp0)
-  
-  
-  # Manually changes about egg SIZE AND WEIGHT
-  # eggSize.sp0   = as.numeric(modelConfig[modelConfig[,1] == "species.egg.size.sp0", 2])
-  # eggWeight.sp0 = as.numeric(modelConfig[modelConfig[,1] == "species.egg.weight.sp0", 2])
-  # meanDensity.sp0 = eggWeight.sp0 / ((4/3 * pi) * (eggSize.sp0/2)^3) 
-  # eggSize     = par[names(par) == "species.egg.size.sp0"]
-  # eggWeight   = (4/3 * pi) * (as.numeric(eggSize)/2)^3 * meanDensity.sp0
-  # modelConfig[modelConfig[,1] == "species.egg.weight.sp0", 2] = eggWeight
-  # modelConfig[modelConfig[,1] == "species.egg.size.sp0", 2]   = eggSize
-  
-  
-  # Critical efficiency and predation ingestion rate 
-  # modelConfig[modelConfig[,1] == "predation.efficiency.critical.sp0", 2]  = par[names(par) == "predation.efficiency.critical.sp0"]
-  # modelConfig[modelConfig[,1] == "predation.ingestion.rate.max.sp0", 2]   = par[names(par) == "predation.ingestion.rate.max.sp0"]
-  # 
-  
-  # Natural mortality
-  # modelConfig[modelConfig[,1] == "mortality.natural.rate.sp0", 2]  = par[names(par) == "mortality.natural.rate.sp0"]
-  
   
   # Manually changes about larval mortality: 19 par but perturbing the mean
   # larvalMortality.sp0 = read.csv(file.path(configDir, "input/larval/larval_mortality-anchovy.csv"), stringsAsFactors = FALSE, sep = ",")
@@ -131,24 +109,10 @@ run_model = function(par,names, ...) {
   # catchability #### TO CHECK
 
   
-  # Sex ratio
-  # modelConfig[modelConfig[,1] == "species.sexratio.sp0", 2]  = par[names(par) == "species.sexratio.sp0"]
   
-  
-  # Von Bertalanffy parameters: l0 perturbed instead of t0
-  # K.sp0    = par[names(par) == "species.K.sp0"]
-  conf[grepl("species\\.k\\.sp", names(conf))] <- par[grepl("species\\.k\\.sp", names(par))]
-  conf[grepl("species\\.linf\\.sp", names(conf))] <- par[grepl("species\\.linf\\.sp", names(par))]
-  # Linf.sp0 = par[names(par) == "species.lInf.sp0"]
-  # 
-  # l0.sp0      = par[names(par) == "species.l0.sp0"]
-  # newl0.sp0   = l0.sp0 * (Linf.sp0)
-  # newt0.sp0   = (1 / K.sp0) * (log(1 - (newl0.sp0 / Linf.sp0)))
-  # modelConfig[modelConfig[,1] == "species.t0.sp0", 2]  = newt0.sp0
-  
-  # Von Bertalanffy parameters: K and lInf
-  # modelConfig[modelConfig[,1] == "species.K.sp0", 2]              = par[names(par) == "species.K.sp0"]
-  # modelConfig[modelConfig[,1] == "species.lInf.sp0", 2]           = par[names(par) == "species.lInf.sp0"]
+  # Von Bertalanffy parameters
+  # conf[grepl("species\\.k\\.sp", names(conf))] <- par[grepl("species\\.k\\.sp", names(par))]
+  # conf[grepl("species\\.linf\\.sp", names(conf))] <- par[grepl("species\\.linf\\.sp", names(par))]
   
   # maturity size
   # sx.sp0   = par[names(par) == "species.maturity.size.sp0"]
@@ -157,6 +121,7 @@ run_model = function(par,names, ...) {
   
   # Length to weight relationship: condition factor perturbed
   # modelConfig[modelConfig[,1] == "species.length2weight.condition.factor.sp0", 2]  =  par[names(par) == "species.length2weight.condition.factor.sp0"]
+  # conf[grepl("species\\.length2weight\\.allometric\\.power\\.sp", names(conf))] <- par[grepl("species\\.length2weight\\.allometric\\.power\\.sp", names(par))]
   
   # NEW configuration file
   write_osmose(conf,file = file.path(config_dir, "modified_config.csv"),sep = ",")
