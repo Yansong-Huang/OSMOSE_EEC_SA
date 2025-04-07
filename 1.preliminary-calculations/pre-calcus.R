@@ -7,15 +7,10 @@ library(osmose)
 source("1.preliminary-calculations/auxiliar.R")
 
 # Config ------------------------------------------------------------------------
-# 物种列表
-species_list <- c(
-  "lesserSpottedDogfish", "redMullet", "pouting", "whiting", "poorCod", "cod", "dragonet", "sole",
-  "plaice", "horseMackerel", "mackerel", "herring", "sardine", "squids", "cuttlefish", "thornbackRay"
-)
 
 # 读取配置数据
 config_dir  = "osmose-eec"
-main_file = "eec_all-parameters.R"
+main_file = "initial_config.csv"
 config_file = file.path(config_dir, main_file)
 conf = read_osmose(input=config_file)
 # # 读取配置数据
@@ -230,7 +225,7 @@ additional_mortality_all_sp <- get_par(conf,"mortality.additional.rate")
 
 # 生成参数名
 additional_mortality_names <- unlist(lapply(0:15, function(sp) {
-  paste0("mortality.natural.rate.sp",sp)
+  paste0("mortality.additional.rate.sp",sp)
 }))
 
 # 加入其他信息，整理表格
@@ -257,7 +252,7 @@ write.table(
 larval_mortality_all_sp <- get_par(conf,"mortality.additional.larva.rate")[1:14]
 
 # larval mortalities of sole and plaice are provided in files
-larval_mortality_dir <- file.path(config_dir,"input/mortality")
+larval_mortality_dir <- file.path(config_dir,"mortality")
 larval_mortality_file_sp7 <- file.path(larval_mortality_dir, "larval_mortality-sole.csv")
 larval_mortality_file_sp8 <- file.path(larval_mortality_dir, "larval_mortality-plaice.csv")
 larval_mortality_sp7 = read.csv(larval_mortality_file_sp7,col.names = c("time","value"))
@@ -282,10 +277,10 @@ larvalMortality = round(larvalMortality, 8)
 # 生成参数名
 # sole (sp7) and plaice (sp8) were placed at last
 larvalMortality_names_1 <- unlist(lapply(c(0:6,9:15), function(sp) {
-  paste0("mortality.natural.larva.rate.sp",sp)
+  paste0("mortality.additional.larva.rate.sp",sp)
 }))
 larvalMortality_names_2 <- unlist(lapply(7:8, function(sp) {
-  paste0("mortality.natural.larva.rate.sp",sp)
+  paste0("mortality.additional.larva.rate.mean.sp",sp)
 }))
 larvalMortality_names <- c(larvalMortality_names_1,larvalMortality_names_2)
 
@@ -298,7 +293,7 @@ larvalMortality_table <- data.frame(
 
 # 写入文档
 write.table(
-  vbThreshold_table,
+  larvalMortality_table,
   "1.preliminary-calculations/csv/larvalMortality.csv",
   row.names = FALSE,
   col.names = FALSE,
@@ -376,19 +371,19 @@ write.table(
 # 14.  L0 -----------------------------------------------------------------------
 # 读取配置数据
 t0_all_sp <- get_par(conf,"species.t0")
-K_all_sp <- get_par(conf,"species.k")
+K_all_sp <- get_par(conf,"species.K")
 Linf_all_sp <- get_par(conf,"species.linf")
 
 # 方程计算vb生长起始体长
 getL0 = function(sp){
-  
+
   t0    = get_par(t0_all_sp,sp=sp)
   k     = get_par(K_all_sp,sp=sp)
   Linf  = get_par(Linf_all_sp,sp=sp)
   t = 0
-  
+
   l0 = Linf*(1 - exp(-k * (t - t0)))
-  
+
   return(l0)
 }
 
@@ -397,13 +392,13 @@ getL0 = function(sp){
 L0_list <- lapply(0:15, getL0)
 L0_reparam = as.numeric(L0_list) / as.numeric(Linf_all_sp)
 L0_reparam = round(L0_reparam, 8)
-# exclude squids (sp13) and cuttlefish (sp14), for which t0=0
-L0_reparam <- L0_reparam[-c(14:15)]
+# might exclude squids (sp13) and cuttlefish (sp14), for which t0=0
+# L0_reparam <- L0_reparam[-c(14:15)]
 
 # 生成参数名
-# exclude squids (sp13) and cuttlefish (sp14), for which t0=0
-L0_names <- unlist(lapply(c(0:12,15), function(sp) {
-  paste0("species.L0.sp",sp) # Yansong: modified lower case l to L
+# might exclude squids (sp13) and cuttlefish (sp14), for which t0=0
+L0_names <- unlist(lapply(c(0:15), function(sp) {
+  paste0("species.l0.sp",sp)
 }))
 
 
@@ -411,12 +406,12 @@ L0_names <- unlist(lapply(c(0:12,15), function(sp) {
 L0_table <- data.frame(
   parameter = L0_names,
   value = L0_reparam,
-  scale = rep("logit", 14)
+  scale = rep("logit", 16)
 )
 
 # 写入文档
 write.table(
-  vbThreshold_table,
+  L0_table,
   "1.preliminary-calculations/csv/L0.csv",
   row.names = FALSE,
   col.names = FALSE,
@@ -429,7 +424,7 @@ write.table(
 # 配置数据已经读取
 # 生成参数名
 K_names <- unlist(lapply(c(0:15), function(sp) {
-  paste0("species.K.sp",sp) 
+  paste0("species.k.sp",sp) 
 }))
 
 
@@ -455,7 +450,7 @@ write.table(
 # 配置数据已经读取
 # 生成参数名
 Linf_names <- unlist(lapply(c(0:15), function(sp) {
-  paste0("species.Linf.sp",sp) # Yansong: modified lower case l to L
+  paste0("species.linf.sp",sp) 
 }))
 
 
@@ -488,7 +483,7 @@ maturity_size_reparam = round(maturity_size_reparam, 8)
 
 # 生成参数名
 maturity_size_names <- unlist(lapply(c(0:15), function(sp) {
-  paste0("species.maturity.size.sp",sp) # Yansong: modified lower case l to L
+  paste0("species.maturity.size.ratio.sp",sp) # Yansong: modified lower case l to L
 }))
 
 # 加入其他信息，整理表格
@@ -501,14 +496,14 @@ maturity_size_table <- data.frame(
 # 写入文档
 write.table(
   maturity_size_table,
-  "1.preliminary-calculations/csv/maturity_size.csv",
+  "1.preliminary-calculations/csv/maturitySize.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
   sep = ","
 )
 
-write.csv(sx, "1.preliminary-calculations/csv/maturity_size.csv")
+
 
 # 18. Constant of proportionality of the allometric length−weight relationship --------------------------------------------
 constant_allometric_all_sp <- get_par(conf,"species.length2weight.condition.factor")
