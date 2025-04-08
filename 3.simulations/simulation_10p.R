@@ -18,6 +18,86 @@ doe = readRDS(file = "2.get-doe/doe/test_complete_10p.rds")
 
 # 2. run function ---------------------------------------------------------
 # The user has to provide a function to evaluate for each parameter vector
+# 替换函数
+replace_maturity_size <- function(conf, par) {
+  # 提取所有 spX 编号
+  get_sp_number <- function(name) sub(".*\\.sp", "", name)
+  
+  ratio_names <- names(par)[grepl("^species\\.maturity\\.size\\.ratio\\.sp", names(par))]
+  linf_names  <- names(par)[grepl("^species\\.linf\\.sp", names(par))]
+  L0_names    <- names(par)[grepl("^species\\.l0\\.sp", names(par))]
+  
+  ratio_sp <- sapply(ratio_names, get_sp_number)
+  Linf_sp  <- sapply(linf_names, get_sp_number)
+  L0_sp    <- sapply(L0_names, get_sp_number)
+  
+  # 取三者交集（保证这三个值都存在的物种）
+  common_sp <- Reduce(intersect, list(ratio_sp, Linf_sp, L0_sp))
+  
+  # 按sp编号排序
+  common_sp <- sort(common_sp)
+  
+  for (sp in common_sp) {
+    # 构建对应名字
+    ratio_name <- paste0("species.maturity.size.ratio.sp", sp)
+    Linf_name  <- paste0("species.linf.sp", sp)
+    L0_name    <- paste0("species.l0.sp", sp)
+    target_name <- paste0("species.maturity.size.sp", sp)
+    
+    # 计算新的成熟体长
+    new_value <- par[[ratio_name]] * (par[[Linf_name]] - par[[L0_name]]) + par[[L0_name]]
+    
+    # 替换进 conf
+    conf[[target_name]] <- new_value
+  }
+  
+  return(conf)
+}
+
+replace_predation_sizeratio <- function(conf, par) {
+  get_sp_number <- function(name) sub(".*\\.sp", "", sub("\\.stage.*", "", name))
+  get_stage_number <- function(name) sub(".*\\.stage", "", name)
+  
+  theta_names <- names(par)[grepl("^predation\\.predPrey\\.sizeRatio\\.teta\\.sp\\d+\\.stage\\d+", names(par))]
+  alpha_names <- names(par)[grepl("^predation\\.predPrey\\.sizeRatio\\.alpha\\.sp\\d+\\.stage\\d+", names(par))]
+  
+  theta_df <- data.frame(
+    name = theta_names,
+    sp = sapply(theta_names, get_sp_number),
+    stage = sapply(theta_names, get_stage_number),
+    stringsAsFactors = FALSE
+  )
+  
+  results <- split(theta_df, theta_df$sp)
+  
+  for (sp in names(results)) {
+    stages <- results[[sp]]$stage
+    min_vec <- numeric(length(stages))
+    max_vec <- numeric(length(stages))
+    
+    for (i in seq_along(stages)) {
+      stage <- stages[i]
+      theta_name <- paste0("predation.predPrey.sizeRatio.teta.sp", sp, ".stage", stage)
+      alpha_name <- paste0("predation.predPrey.sizeRatio.alpha.sp", sp, ".stage", stage)
+      
+      theta <- par[[theta_name]]
+      alpha <- par[[alpha_name]]
+      
+      # 使用已有的 maxSlope(angle, m_min) 函数
+      min_val <- 1 / maxSlope(angle = theta, m_min = 0)
+      max_val <- 1 / maxSlope(angle = alpha, m_min = 1 / min_val)  # min_val 已算好
+      
+      min_vec[i] <- min_val
+      max_vec[i] <- max_val
+    }
+    
+    conf[[paste0("predation.predprey.sizeratio.min.sp", sp)]] <- min_vec
+    conf[[paste0("predation.predprey.sizeratio.max.sp", sp)]] <- max_vec
+  }
+  
+  return(conf)
+}
+
 
 run_model = function(par,names, ...) {
   
@@ -46,9 +126,9 @@ run_model = function(par,names, ...) {
   par_names  <- names(par)
   
   # 取交集，直接替换以下参数
-  # mortality.additional.rate mortality.additional.larva.rate(except sp7 sp8)
   # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
-  # species.sexratio species.k species.length2weight.condition.factor species.linf
+  # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
+  # species.vonbertalanffy.threshold.age
   common_names <- intersect(conf_names, par_names)
   
   # 用名字赋值，确保一一对应
@@ -75,20 +155,12 @@ run_model = function(par,names, ...) {
   
   
   # Manually changes about PREDATION SIZE RATIOS
+  conf <- replace_predation_sizeratio(conf, par)
   # theta.sp0.stage1   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.theta.sp0.stage1"]) * (pi/2)
   # alpha.sp0.stage1   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.alpha.sp0.stage1"]) * ((pi/2)-theta.sp0.stage1)
   # min.sp0.stage1 = 1/maxSlope(angle = theta.sp0.stage1, m_min = 0)
   # max.sp0.stage1 = 1/maxSlope(angle = alpha.sp0.stage1, m_min = 1/min.sp0.stage1)
   # 
-  # theta.sp0.stage2   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.theta.sp0.stage2"]) * (pi/2)
-  # alpha.sp0.stage2   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.alpha.sp0.stage2"]) * ((pi/2)-theta.sp0.stage2)
-  # min.sp0.stage2 = 1/maxSlope(angle = theta.sp0.stage2, m_min = 0)
-  # max.sp0.stage2 = 1/maxSlope(angle = alpha.sp0.stage2, m_min = 1/min.sp0.stage2)
-  # 
-  # modelConfig[modelConfig[,1] == "predation.predPrey.sizeRatio.max.sp0", c(2,3)] = c(max.sp0.stage1, max.sp0.stage2)
-  # modelConfig[modelConfig[,1] == "predation.predPrey.sizeRatio.min.sp0", c(2,3)] = c(min.sp0.stage1, min.sp0.stage2)
-  # 
-  
   
   # Manually changes about larval mortality: 19 par but perturbing the mean
   # larvalMortality.sp0 = read.csv(file.path(configDir, "input/larval/larval_mortality-anchovy.csv"), stringsAsFactors = FALSE, sep = ",")
@@ -109,19 +181,12 @@ run_model = function(par,names, ...) {
   # catchability #### TO CHECK
 
   
-  
-  # Von Bertalanffy parameters
-  # conf[grepl("species\\.k\\.sp", names(conf))] <- par[grepl("species\\.k\\.sp", names(par))]
-  # conf[grepl("species\\.linf\\.sp", names(conf))] <- par[grepl("species\\.linf\\.sp", names(par))]
-  
   # maturity size
+  conf <- replace_maturity_size(conf, par)
+  
   # sx.sp0   = par[names(par) == "species.maturity.size.sp0"]
   # smat.sp0 = ((sx.sp0)*(Linf.sp0.per - newl0.sp0)) + newl0.sp0
   # modelConfig[modelConfig[,1] == "species.maturity.size.sp0", 2]  = smat.sp0
-  
-  # Length to weight relationship: condition factor perturbed
-  # modelConfig[modelConfig[,1] == "species.length2weight.condition.factor.sp0", 2]  =  par[names(par) == "species.length2weight.condition.factor.sp0"]
-  # conf[grepl("species\\.length2weight\\.allometric\\.power\\.sp", names(conf))] <- par[grepl("species\\.length2weight\\.allometric\\.power\\.sp", names(par))]
   
   # NEW configuration file
   write_osmose(conf,file = file.path(config_dir, "modified_config.csv"),sep = ",")
