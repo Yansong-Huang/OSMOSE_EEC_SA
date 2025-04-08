@@ -11,6 +11,23 @@ source("run_up/elementary-effects.R")
 source("run_up/methods.R")
 source("run_up/auxiliar.R")
 
+# 定义路径
+config_dir  = "osmose-eec"
+main_file = "initial_config.csv"
+config_file = file.path(config_dir, main_file)
+# define the java and osmose executables
+jar_file    = file.path(config_dir, "osmose_4.4.0-jar-with-dependencies.jar")
+
+# 物种列表
+species_list <- c(
+  "lesserSpottedDogfish", "redMullet", "pouting", "whiting", "poorCod", "cod", "dragonet", "sole",
+  "plaice", "horseMackerel", "mackerel", "herring", "sardine", "squids", "cuttlefish", "thornbackRay"
+)
+
+# 创建物种与编号的映射关系
+species_codes <- setNames(0:15, species_list)
+
+
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
 
@@ -99,24 +116,96 @@ replace_predation_sizeratio <- function(conf, par) {
 }
 
 
+update_larval_mortality <- function(species_name, par, conf) {
+  # 获取物种代码
+  sp_code <- species_codes[species_name]
+  
+  # 读取死亡率数据
+  larvalMortality.sp <- read.csv(file.path(config_dir, conf[paste0("mortality.additional.larva.rate.bytdt.file.sp", sp_code)]), 
+                                 stringsAsFactors = FALSE, sep = ",")
+  
+  # 计算对数偏移量
+  lx  = log(larvalMortality.sp$x)
+  mlx = mean(lx) # perturbation using mlx: lx = exp()
+  dlx = lx - mlx
+  
+  # 获取附加死亡率并计算新的死亡率
+  Lx = par[paste0("mortality.additional.larva.rate.mean.sp", sp_code)]
+  new_lx = dlx + log(Lx)
+  new_x = exp(new_lx)
+  
+  # 更新数据
+  larvalMortality.sp$x = new_x
+  
+  # 保存修改后的数据
+  modified_file <- paste0("mortality/modified_larval_mortality-sp", sp_code, ".csv")
+  write.table(larvalMortality.sp, file = file.path(config_dir, modified_file), row.names = FALSE, sep = ",")
+  
+  # 更新配置文件
+  conf[paste0("mortality.additional.larva.rate.bytdt.file.sp", sp_code)] <- modified_file
+  
+  return(conf)  # 返回更新后的配置
+}
+
+update_predation_accessibility <- function(conf, par) {
+  # 读取原始 predation.accessibility 文件
+  predationAccessibility <- read.csv(file.path(config_dir, conf["predation.accessibility.file"]),
+                                     stringsAsFactors = FALSE, sep = ",", row.names = 1)
+  
+  # 获取 predationAccessibility 的行列数
+  nrow_pred <- nrow(predationAccessibility)
+  ncol_pred <- ncol(predationAccessibility)
+  
+  
+  # 选取 par 中以 "predation.accessibility" 开头的参数
+  predation_accessibility_params <- par[grep("^predation.accessibility", names(par))]
+  
+  # 确保 par 中的相关数据数量与 predationAccessibility 的尺寸匹配
+  if (length(predation_accessibility_params) != (nrow_pred-11) * ncol_pred) {
+    stop("wrong dimensions！")
+  }
+  
+  # 将数据按列优先的顺序分配给 predationAccessibility
+  data_idx <- 1  # 初始化数据索引
+  
+  for (col in 1:ncol_pred) {
+    # 填充每一列数据
+    for (row in 1:nrow_pred) {
+      # 跳过第29-39行，直接跳到下一列
+      if (row > 28) {
+        break
+      }
+      predationAccessibility[row, col] <- predation_accessibility_params[data_idx]
+      data_idx <- data_idx + 1
+    }
+  }
+  
+  # 保存修改后的文件
+  modified_file_path <- file.path(config_dir, "modified-predation-accessibility.csv")
+  write.table(predationAccessibility,
+              file = modified_file_path,
+              row.names = TRUE,
+              col.names = NA,
+              sep = ",")
+  
+  
+  # 更新 conf 中的文件路径
+  conf["predation.accessibility.file"] <- "modified-predation-accessibility.csv"
+  
+  return(conf)
+}
+
+
+
+# 使用示例
+
 run_model = function(par,names, ...) {
   
   # set parameter names
   names(par) = names
   
   # 读取配置数据
-  config_dir  = "osmose-eec"
-  main_file = "initial_config.csv"
-  config_file = file.path(config_dir, main_file)
-  
   conf = read_osmose(input=config_file)
-  
-  # define the java and osmose executables
-  # configDir  = "osmose-peru"
-  jar_file    = file.path(config_dir, "osmose_4.4.0-jar-with-dependencies.jar")
-  
-  # # initial configuration file
-  # modelConfig = read.csv(file = file.path(configDir, "config.csv"), stringsAsFactors = FALSE, na.strings = c(""))
   
   # temporary output directory
   output_temp = "output_temp"
@@ -125,71 +214,32 @@ run_model = function(par,names, ...) {
   conf_names <- names(conf)
   par_names  <- names(par)
   
-  # 取交集，直接替换以下参数
+  # 取交集，直接替换以下参数.用名字赋值，确保一一对应
   # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
   # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
   # species.vonbertalanffy.threshold.age
   common_names <- intersect(conf_names, par_names)
   
-  # 用名字赋值，确保一一对应
   conf[common_names] <- par[common_names]
   
   # Manually changes about PREDATION ACCESSIBILITY
-  # predationAccessibility = read.csv(file.path(configDir, "input/predation-accessibility.csv"), stringsAsFactors = FALSE, sep = ",")
-  # pred = as.matrix(predationAccessibility[,-1])
-  # 
-  # predx = tail(pred[sp, ]/pred[1:9, sp], -1) 
-  # 
-  # predationAccessibility$anchovy[c(1:9)[-sp]] = pmin(par[c(1:8)], 1)
-  # predationAccessibility$hake[sp]             = pmin(predx[1]*par[1], 1)
-  # predationAccessibility$sardine[sp]          = pmin(predx[2]*par[2], 1)
-  # predationAccessibility$jurel[sp]            = pmin(predx[3]*par[3], 1)
-  # predationAccessibility$caballa[sp]          = pmin(predx[4]*par[4], 1)
-  # predationAccessibility$meso[sp]             = pmin(predx[5]*par[5], 1)
-  # predationAccessibility$munida[sp]           = pmin(predx[6]*par[6], 1)
-  # predationAccessibility$pota[sp]             = pmin(predx[7]*par[7], 1)
-  # predationAccessibility$euphausidos[sp]      = pmin(predx[8]*par[8], 1)
-  # colnames(predationAccessibility)[1] = ""
-  # write.table(predationAccessibility, file = file.path(configDir, "newPredationAccessibility.csv"), row.names = FALSE, sep = ";")
-  # modelConfig[modelConfig[,1] == "predation.accessibility.file", 2] = "newPredationAccessibility.csv"
-  
+  conf <- update_predation_accessibility(conf, par)
   
   # Manually changes about PREDATION SIZE RATIOS
   conf <- replace_predation_sizeratio(conf, par)
-  # theta.sp0.stage1   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.theta.sp0.stage1"]) * (pi/2)
-  # alpha.sp0.stage1   = as.numeric(par[names(par) == "predation.predPrey.sizeRatio.alpha.sp0.stage1"]) * ((pi/2)-theta.sp0.stage1)
-  # min.sp0.stage1 = 1/maxSlope(angle = theta.sp0.stage1, m_min = 0)
-  # max.sp0.stage1 = 1/maxSlope(angle = alpha.sp0.stage1, m_min = 1/min.sp0.stage1)
-  # 
-  
-  # Manually changes about larval mortality: 19 par but perturbing the mean
-  # larvalMortality.sp0 = read.csv(file.path(configDir, "input/larval/larval_mortality-anchovy.csv"), stringsAsFactors = FALSE, sep = ",")
-  # lx  = log(larvalMortality.sp0$larval_mortality_by_dt)
-  # mlx = mean(lx) # perturbation using mlx: lx = exp()
-  # dlx = lx - mlx
-  # 
-  # Lx = par[names(par) == "mortality.natural.larva.rate.Lx.sp0"]
-  # new_lx = dlx + log(Lx)
-  # new_x = exp(new_lx)
-  # 
-  # newLarvalMortality.sp = larvalMortality.sp0
-  # newLarvalMortality.sp$larval_mortality_by_dt = new_x
-  # colnames(newLarvalMortality.sp)[1] = ""
-  # write.table(newLarvalMortality.sp, file = file.path(configDir, "newLavalMortality-anchovy.csv"), row.names = FALSE, sep = ",")
-  # modelConfig[modelConfig[,1] == "mortality.natural.larva.rate.bytDt.file.sp0", 2] = "newLavalMortality-anchovy.csv"
+ 
+  # Manually changes about larval mortality
+  conf <- update_larval_mortality("sole", par, conf)  
+  conf <- update_larval_mortality("plaice", par, conf)  
   
   # catchability #### TO CHECK
-
+  
   
   # maturity size
   conf <- replace_maturity_size(conf, par)
   
-  # sx.sp0   = par[names(par) == "species.maturity.size.sp0"]
-  # smat.sp0 = ((sx.sp0)*(Linf.sp0.per - newl0.sp0)) + newl0.sp0
-  # modelConfig[modelConfig[,1] == "species.maturity.size.sp0", 2]  = smat.sp0
-  
   # NEW configuration file
-  write_osmose(conf,file = file.path(config_dir, "modified_config.csv"),sep = ",")
+  write_osmose(conf, file = file.path(config_dir, "modified_config.csv"),sep = ",")
   
   # run Osmose Model
   # 检查校准参数文档中的内容是否已经迁移
