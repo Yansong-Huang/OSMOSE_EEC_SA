@@ -1,4 +1,3 @@
-# Lujan et al 2023: 
-Key species and indicators revealed by an uncertainty analysis of the marine ecosystem model OSMOSE
+# OSMOSE_EEC_SA
+Sensitivity analysis of OSMOSE-EEC
 
-MEPS journal
