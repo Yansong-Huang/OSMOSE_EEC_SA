@@ -78,7 +78,7 @@ pred_ratio_table <- data.frame(
 
 write.table(
   pred_ratio_table,
-  "1.preliminary-calculations/csv/sizeRatios.csv",
+  "1.preliminary-calculations/initial_parameters/sizeRatios.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -103,7 +103,7 @@ starvation_mortality_table <- data.frame(
 
 write.table(
   starvation_mortality_table,
-  "1.preliminary-calculations/csv/starvationMortality.csv",
+  "1.preliminary-calculations/initial_parameters/starvationMortality.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -133,14 +133,13 @@ vbThreshold_table <- data.frame(
 
 write.table(
   vbThreshold_table,
-  "1.preliminary-calculations/csv/vbThreshold.csv",
+  "1.preliminary-calculations/initial_parameters/vbThreshold.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
   sep = ","
 )
 
-write.csv(vbThreshold, "1.preliminary-calculations/csv/vbThreshold.csv")
 
 # 7. Egg size --------------------------------------------
 egg_size_all_sp <- get_par(conf,"species.egg.size")
@@ -160,7 +159,7 @@ egg_size_table <- data.frame(
 
 write.table(
   egg_size_table,
-  "1.preliminary-calculations/csv/eggSize.csv",
+  "1.preliminary-calculations/initial_parameters/eggSize.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -185,7 +184,7 @@ crit_pred_effic_table <- data.frame(
 
 write.table(
   crit_pred_effic_table,
-  "1.preliminary-calculations/csv/critPredEffic.csv",
+  "1.preliminary-calculations/initial_parameters/critPredEffic.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -211,7 +210,7 @@ predation_ingestion_table <- data.frame(
 
 write.table(
   predation_ingestion_table,
-  "1.preliminary-calculations/csv/predationIngestion.csv",
+  "1.preliminary-calculations/initial_parameters/predationIngestion.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -238,7 +237,7 @@ additional_mortality_table <- data.frame(
 
 write.table(
   additional_mortality_table,
-  "1.preliminary-calculations/csv/additionalMortality.csv",
+  "1.preliminary-calculations/initial_parameters/additionalMortality.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -294,7 +293,7 @@ larvalMortality_table <- data.frame(
 # 写入文档
 write.table(
   larvalMortality_table,
-  "1.preliminary-calculations/csv/larvalMortality.csv",
+  "1.preliminary-calculations/initial_parameters/larvalMortality.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -305,7 +304,7 @@ write.table(
 # 12. catchability -----------------------------------------------------------------------
 catchability_all_sp <- get_par(conf, par="osmose.user.catchability")
 catchability_all_fl <- get_par(conf, par="fisheries.rate.base")
-fishing_dir <- file.path(config_dir,"input/fishing")
+fishing_dir <- file.path(config_dir,"fishing")
 catchability_file <- file.path(fishing_dir, "eec_fisheries_catchability.csv")
 
 catchability.matrix = read.csv(catchability_file, check.names = FALSE, row.names = 1)
@@ -313,7 +312,7 @@ catchability.matrix = read.csv(catchability_file, check.names = FALSE, row.names
 catchability_species_names <- names(catchability_all_sp)
 catchability_species_names <- gsub("osmose\\.user", "species", catchability_species_names)
 catchability_fleet_names <- unlist(lapply(0:3, function(fsh) {
-  paste0("fleet.catchability.fsh3.",fsh)
+  paste0("fisheries.rate.base.fsh",fsh)
 }))
 
 catchability_species_values <- c(catchability.matrix[c(1:4,6,8:11,14:16),1],
@@ -331,7 +330,7 @@ catchability_table <- data.frame(
 
 write.table(
   catchability_table,
-  "1.preliminary-calculations/csv/catchability.csv",
+  "1.preliminary-calculations/initial_parameters/catchability.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -358,7 +357,7 @@ sex_ratio_table <- data.frame(
 
 write.table(
   sex_ratio_table,
-  "1.preliminary-calculations/csv/sexRatio.csv",
+  "1.preliminary-calculations/initial_parameters/sexRatio.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -412,7 +411,7 @@ L0_table <- data.frame(
 # 写入文档
 write.table(
   L0_table,
-  "1.preliminary-calculations/csv/L0.csv",
+  "1.preliminary-calculations/initial_parameters/L0.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -424,7 +423,7 @@ write.table(
 # 配置数据已经读取
 # 生成参数名
 K_names <- unlist(lapply(c(0:15), function(sp) {
-  paste0("species.k.sp",sp) 
+  paste0("species.K.sp",sp) 
 }))
 
 
@@ -438,7 +437,7 @@ K_table <- data.frame(
 # 写入文档
 write.table(
   K_table,
-  "1.preliminary-calculations/csv/K.csv",
+  "1.preliminary-calculations/initial_parameters/K.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -464,7 +463,7 @@ Linf_table <- data.frame(
 # 写入文档
 write.table(
   Linf_table,
-  "1.preliminary-calculations/csv/Linf.csv",
+  "1.preliminary-calculations/initial_parameters/Linf.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -496,7 +495,7 @@ maturity_size_table <- data.frame(
 # 写入文档
 write.table(
   maturity_size_table,
-  "1.preliminary-calculations/csv/maturitySize.csv",
+  "1.preliminary-calculations/initial_parameters/maturitySize.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
@@ -523,7 +522,7 @@ constant_allometric_table <- data.frame(
 
 write.table(
   constant_allometric_table,
-  "1.preliminary-calculations/csv/constantAllometric.csv",
+  "1.preliminary-calculations/initial_parameters/constantAllometric.csv",
   row.names = FALSE,
   col.names = FALSE,
   quote = FALSE,
