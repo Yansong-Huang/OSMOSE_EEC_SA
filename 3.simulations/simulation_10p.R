@@ -115,7 +115,6 @@ replace_predation_sizeratio <- function(conf, par) {
   return(conf)
 }
 
-
 update_larval_mortality <- function(species_name, par, conf) {
   # 获取物种代码
   sp_code <- species_codes[species_name]
@@ -195,6 +194,36 @@ update_predation_accessibility <- function(conf, par) {
   return(conf)
 }
 
+update_catchability_matrix <- function(conf, par) {
+  # 读取原矩阵
+  file_path <- file.path(config_dir, conf["fisheries.catchability.file"])
+  catch_matrix <- read.csv(file_path, row.names = 1, check.names = FALSE)
+  
+  # 匹配参数
+  param_idx <- grep("^species\\.catchability\\.fsh\\d+\\.sp\\d+$", names(par))
+  param_names <- names(par)[param_idx]
+  
+  for (pname in param_names) {
+    # 提取 fsh 和 sp 编号
+    matches <- regmatches(pname, regexec("^species\\.catchability\\.fsh(\\d+)\\.sp(\\d+)$", pname))[[1]]
+    fsh_idx <- as.integer(matches[2]) + 1
+    sp_idx  <- as.integer(matches[3]) + 1
+    
+    # 替换对应位置
+    catch_matrix[sp_idx, fsh_idx] <- par[[pname]]
+  }
+  
+  # 写入新文件
+  modified_file <- "fishing/modified_eec_fisheries_catchability.csv"
+  write.table(catch_matrix,
+              file = file.path(config_dir, modified_file),
+              sep = ",", row.names = TRUE, col.names = NA)
+  
+  # 更新 conf
+  conf["fisheries.catchability.file"] <- modified_file
+  
+  return(conf)
+}
 
 
 # 使用示例
@@ -217,7 +246,7 @@ run_model = function(par,names, ...) {
   # 取交集，直接替换以下参数.用名字赋值，确保一一对应
   # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
   # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
-  # species.vonbertalanffy.threshold.age
+  # species.vonbertalanffy.threshold.age fisheries.rate.base
   common_names <- intersect(conf_names, par_names)
   
   conf[common_names] <- par[common_names]
@@ -233,7 +262,7 @@ run_model = function(par,names, ...) {
   conf <- update_larval_mortality("plaice", par, conf)  
   
   # catchability #### TO CHECK
-  
+  conf <- update_catchability_matrix(conf, par)
   
   # maturity size
   conf <- replace_maturity_size(conf, par)
