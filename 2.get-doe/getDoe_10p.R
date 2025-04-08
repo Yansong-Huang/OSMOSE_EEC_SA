@@ -11,7 +11,7 @@ source("run_up/auxiliar.R")
 
   
   # 文件夹路径
-  parameter_path <- "2.get-doe/initial_parameters"
+  parameter_path <- "1.preliminary-calculations/initial_parameters"
   
   # 获取所有初始参数文件路径
   csv_files <- list.files(path = parameter_path, pattern = "\\.csv$", full.names = TRUE)
