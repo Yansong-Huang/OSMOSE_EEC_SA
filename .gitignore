@@ -4,6 +4,7 @@
 .Ruserdata
 
 /osmose-peru/*
-/output_Yansong/*
-/output_Yansong_test/*
-OSMOSE_EEC_SA.RPROJ
+/output_temp/*
+/simulation_results/*
+osmose-eec/**/*modified*.csv
+
