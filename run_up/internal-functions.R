@@ -183,9 +183,9 @@ run_experiments.doe = function(X, FUN, ..., parallel=FALSE, control=list()) {
   # optimization of duplicates 
 
   out = if(isTRUE(parallel)) {
-    .run_experiments_doe_parallel(X=X, FUN=FUN, ..., control=list())    
+    .run_experiments_doe_parallel(X=X, FUN=FUN, ..., control=control)    
   } else {
-    .run_experiments_doe_seq(X=X, FUN=FUN, ..., control=list())
+    .run_experiments_doe_seq(X=X, FUN=FUN, ..., control=control)
   }
   
   class(out) = c("doe_output", class(out))
