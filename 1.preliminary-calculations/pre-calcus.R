@@ -111,34 +111,33 @@ write.table(
 )
 
 # 6.   F4: von Bertalanffy threshold --------------------------------------------
-# Exclude thornback ray (sp15), for which vb threshold=0
-vbThrs_all_sp <- get_par(conf, "species.vonbertalanffy.threshold.age")
-lifeSpan_all_sp <- get_par(conf, "species.lifespan") 
-vbThrs_reparam = as.numeric(vbThrs_all_sp) / as.numeric(lifeSpan_all_sp)
-vbThrs_reparam = round(vbThrs_reparam, 8)
-
-
-# 生成参数名
-# exclude thornback ray (sp15), for which vb threshold=0
-vbThreshold_names <- unlist(lapply(0:14, function(sp) {
-  paste0("species.vonbertalanffy.threshold.age.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-vbThreshold_table <- data.frame(
-  parameter = vbThreshold_names,
-  value = vbThrs_reparam[-16],
-  scale = rep("logit", 15)
-)
-
-write.table(
-  vbThreshold_table,
-  "1.preliminary-calculations/initial_parameters/vbThreshold.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
+# 
+# vbThrs_all_sp <- get_par(conf, "species.vonbertalanffy.threshold.age")
+# lifeSpan_all_sp <- get_par(conf, "species.lifespan") 
+# vbThrs_reparam = as.numeric(vbThrs_all_sp) / as.numeric(lifeSpan_all_sp)
+# vbThrs_reparam = round(vbThrs_reparam, 8)
+# 
+# 
+# # 生成参数名
+# vbThreshold_names <- unlist(lapply(0:15, function(sp) {
+#   paste0("species.vonbertalanffy.threshold.age.sp",sp)
+# }))
+# 
+# # 加入其他信息，整理表格
+# vbThreshold_table <- data.frame(
+#   parameter = vbThreshold_names,
+#   value = vbThrs_reparam,
+#   scale = rep("logit", 16)
+# )
+# 
+# write.table(
+#   vbThreshold_table,
+#   "1.preliminary-calculations/initial_parameters/vbThreshold.csv",
+#   row.names = FALSE,
+#   col.names = FALSE,
+#   quote = FALSE,
+#   sep = ","
+# )
 
 
 # 7. Egg size --------------------------------------------
@@ -529,4 +528,28 @@ write.table(
   sep = ","
 )
 
+# 19. LTL ressources accessibility to fish --------------------------------------------
+ltl_access_all_sp <- get_par(conf,"species.accessibility2fish")
+
+# 生成参数名
+ltl_access_names <- unlist(lapply(16:26, function(sp) {
+  paste0("species.accessibility2fish.sp",sp)
+}))
+
+# 加入其他信息，整理表格
+ltl_access_table <- data.frame(
+  parameter = ltl_access_names,
+  value = as.numeric(ltl_access_all_sp),
+  scale = rep("logit", 11)
+)
+
+
+write.table(
+  ltl_access_table,
+  "1.preliminary-calculations/initial_parameters/ltlAccess.csv",
+  row.names = FALSE,
+  col.names = FALSE,
+  quote = FALSE,
+  sep = ","
+)
 

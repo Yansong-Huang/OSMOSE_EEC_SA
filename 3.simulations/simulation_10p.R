@@ -51,8 +51,8 @@ replace_maturity_size <- function(conf, par) {
   # 取三者交集（保证这三个值都存在的物种）
   common_sp <- Reduce(intersect, list(ratio_sp, Linf_sp, L0_sp))
   
-  # 按sp编号排序
-  common_sp <- sort(common_sp)
+  # 按 sp 编号排序，确保是数值顺序而非字典序
+  common_sp <- sort(as.integer(common_sp))
   
   for (sp in common_sp) {
     # 构建对应名字
@@ -66,6 +66,43 @@ replace_maturity_size <- function(conf, par) {
     
     # 替换进 conf
     conf[[target_name]] <- new_value
+  }
+  
+  return(conf)
+}
+
+replace_t0 <- function(conf, par) {
+
+  # 提取所有 spX 编号
+  get_sp_number <- function(name) sub(".*\\.sp", "", name)
+  
+  K_names <- names(par)[grepl("^species\\.K\\.sp", names(par))]
+  Linf_names  <- names(par)[grepl("^species\\.linf\\.sp", names(par))]
+  L0_names    <- names(par)[grepl("^species\\.l0\\.sp", names(par))]
+  
+  K_sp <- sapply(K_names, get_sp_number)
+  Linf_sp  <- sapply(Linf_names, get_sp_number)
+  L0_sp    <- sapply(L0_names, get_sp_number)
+  
+  # 取三者交集（保证这三个值都存在的物种）
+  common_sp <- Reduce(intersect, list(K_sp, Linf_sp, L0_sp))
+  
+  # 按 sp 编号排序，确保是数值顺序而非字典序
+  common_sp <- sort(as.integer(common_sp))
+  
+  for (sp in common_sp) {
+    # 构建对应名字
+    K_name <- paste0("species.K.sp", sp)
+    Linf_name  <- paste0("species.linf.sp", sp)
+    L0_name    <- paste0("species.l0.sp", sp)
+    target_name <- paste0("species.t0.sp", sp)
+    
+    # 计算新L0与t0
+    new_l0 <- par[[L0_name]] * par[[Linf_name]]
+    new_t0 <- (1/par[[K_name]])*log(1-(new_l0/par[[Linf_name]]))
+    
+    # 替换进 conf
+    conf[[target_name]] <- new_t0
   }
   
   return(conf)
@@ -243,7 +280,7 @@ run_model = function(par,names, ...) {
   conf_names <- names(conf)
   par_names  <- names(par)
   
-  # 取交集，直接替换以下参数.用名字赋值，确保一一对应
+  # 1. 取交集，直接替换以下参数.用名字赋值，确保一一对应
   # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
   # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
   # species.vonbertalanffy.threshold.age fisheries.rate.base
@@ -251,22 +288,25 @@ run_model = function(par,names, ...) {
   
   conf[common_names] <- par[common_names]
   
-  # Manually changes about PREDATION ACCESSIBILITY
+  # 2. Manually changes about PREDATION ACCESSIBILITY
   conf <- update_predation_accessibility(conf, par)
   
-  # Manually changes about PREDATION SIZE RATIOS
+  # 3. Manually changes about PREDATION SIZE RATIOS
   conf <- replace_predation_sizeratio(conf, par)
  
-  # Manually changes about larval mortality
+  # 4. Manually changes about larval mortality
   conf <- update_larval_mortality("sole", par, conf)  
   conf <- update_larval_mortality("plaice", par, conf)  
   
-  # catchability #### TO CHECK
+  # 5. catchability 
   conf <- update_catchability_matrix(conf, par)
   
-  # maturity size
+  # 6. maturity size
   conf <- replace_maturity_size(conf, par)
   
+  # 7. L0
+  conf <- replace_t0(conf, par)
+    
   # NEW configuration file
   write_osmose(conf, file = file.path(config_dir, "modified_config.csv"),sep = ",")
   
