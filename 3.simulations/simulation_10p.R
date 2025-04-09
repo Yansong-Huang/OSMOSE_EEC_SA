@@ -345,6 +345,8 @@ run_model = function(par,names, ...) {
                 # osmose.sizeSpectrumY  = get_var(data, what = "SizeSpectrumY", expected=FALSE)
                 )
   
+  dir.create("simulation_results", recursive = TRUE, showWarnings = FALSE)
+  
   return(output)
 }
 
