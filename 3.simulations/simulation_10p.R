@@ -262,6 +262,11 @@ update_catchability_matrix <- function(conf, par) {
   return(conf)
 }
 
+log_message <- function(...) {
+  cat(format(Sys.time(), "%H:%M:%S"), "-", ..., "\n")
+}
+
+# log_message("Replaced", length(par), "parameters.")
 
 # 使用示例
 
@@ -310,6 +315,12 @@ run_model = function(par,names, ...) {
   # NEW configuration file
   write_osmose(conf, file = file.path(config_dir, "modified_config.csv"),sep = ",")
   
+  save_conf <- function(conf, i) {
+    out_path <- file.path(config_dir, sprintf("conf_simulation_%03d.csv", i))
+    write.table(as.data.frame(conf), file = out_path, sep = ",", row.names = TRUE)
+    log_message("Saved conf to", out_path)
+  }
+  
   # run Osmose Model
   # 检查校准参数文档中的内容是否已经迁移
   
@@ -340,7 +351,16 @@ run_model = function(par,names, ...) {
 # 3. save outputs ---------------------------------------------------------
 
 start = date()
-test_10p = run_experiments(X = doe, FUN = run_model, names=doe$parameter,  parallel=TRUE)
+test_10p = run_experiments(
+  X = doe,
+  FUN = run_model,
+  names = doe$parameter,
+  parallel = TRUE,
+  control = list(
+    output = "result",
+    output.dir = "simulation_results"
+  )
+)
 end   = date()
 
-saveRDS(object = test_10p, file = "output_Yansong/test_10p.rds")
+saveRDS(object = test_10p, file = "simulation_results/test_10p.rds")
