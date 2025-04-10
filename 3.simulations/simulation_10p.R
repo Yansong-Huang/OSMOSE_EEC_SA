@@ -183,54 +183,6 @@ update_larval_mortality <- function(species_name, par, conf) {
   return(conf)  # 返回更新后的配置
 }
 
-update_predation_accessibility <- function(conf, par) {
-  # 读取原始 predation.accessibility 文件
-  predationAccessibility <- read.csv(file.path(config_dir, conf["predation.accessibility.file"]),
-                                     stringsAsFactors = FALSE, sep = ",", row.names = 1)
-  
-  # 获取 predationAccessibility 的行列数
-  nrow_pred <- nrow(predationAccessibility)
-  ncol_pred <- ncol(predationAccessibility)
-  
-  
-  # 选取 par 中以 "predation.accessibility" 开头的参数
-  predation_accessibility_params <- par[grep("^predation.accessibility", names(par))]
-  
-  # 确保 par 中的相关数据数量与 predationAccessibility 的尺寸匹配
-  if (length(predation_accessibility_params) != (nrow_pred-11) * ncol_pred) {
-    stop("wrong dimensions！")
-  }
-  
-  # 将数据按列优先的顺序分配给 predationAccessibility
-  data_idx <- 1  # 初始化数据索引
-  
-  for (col in 1:ncol_pred) {
-    # 填充每一列数据
-    for (row in 1:nrow_pred) {
-      # 跳过第29-39行，直接跳到下一列
-      if (row > 28) {
-        break
-      }
-      predationAccessibility[row, col] <- predation_accessibility_params[data_idx]
-      data_idx <- data_idx + 1
-    }
-  }
-  
-  # 保存修改后的文件
-  modified_file_path <- file.path(config_dir, "modified-predation-accessibility.csv")
-  write.table(predationAccessibility,
-              file = modified_file_path,
-              row.names = TRUE,
-              col.names = NA,
-              sep = ",")
-  
-  
-  # 更新 conf 中的文件路径
-  conf["predation.accessibility.file"] <- "modified-predation-accessibility.csv"
-  
-  return(conf)
-}
-
 update_catchability_matrix <- function(conf, par) {
   # 读取原矩阵
   file_path <- file.path(config_dir, conf["fisheries.catchability.file"])
@@ -275,7 +227,7 @@ run_model = function(par,names, ...) {
   # set parameter names
   names(par) = names
   
-  # 读取配置数据
+  # read initial config
   conf = read_osmose(input=config_file)
   
   # temporary output directory
@@ -285,7 +237,7 @@ run_model = function(par,names, ...) {
   conf_names <- names(conf)
   par_names  <- names(par)
   
-  # 1. 取交集，直接替换以下参数.用名字赋值，确保一一对应
+  # 1. change following  parameters
   # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
   # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
   # species.vonbertalanffy.threshold.age fisheries.rate.base
@@ -293,23 +245,20 @@ run_model = function(par,names, ...) {
   
   conf[common_names] <- par[common_names]
   
-  # 2. Manually changes about PREDATION ACCESSIBILITY
-  conf <- update_predation_accessibility(conf, par)
-  
-  # 3. Manually changes about PREDATION SIZE RATIOS
+  # Manually changes about PREDATION SIZE RATIOS
   conf <- replace_predation_sizeratio(conf, par)
  
-  # 4. Manually changes about larval mortality
+  # Manually changes about larval mortality
   conf <- update_larval_mortality("sole", par, conf)  
   conf <- update_larval_mortality("plaice", par, conf)  
   
-  # 5. catchability 
+  # catchability 
   conf <- update_catchability_matrix(conf, par)
   
-  # 6. maturity size
+  # maturity size
   conf <- replace_maturity_size(conf, par)
   
-  # 7. L0
+  # t0
   conf <- replace_t0(conf, par)
     
   # NEW configuration file
@@ -322,7 +271,6 @@ run_model = function(par,names, ...) {
   }
   
   # run Osmose Model
-  # 检查校准参数文档中的内容是否已经迁移
   
   new_config <- file.path(config_dir, "modified_config.csv")
   run_osmose(input = new_config, output = output_temp, osmose = jar_file, version = "4.4.0")
