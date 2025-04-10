@@ -7,4 +7,5 @@
 /output_temp/*
 /simulation_results/*
 osmose-eec/**/*modified*.csv
+*restart.txt
 

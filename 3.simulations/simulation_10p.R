@@ -31,7 +31,7 @@ species_codes <- setNames(0:15, species_list)
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
 
-doe = readRDS(file = "2.get-doe/doe/test_complete_10p.rds")
+doe = readRDS(file = "2.get-doe/doe/test_10p_0410.rds")
 
 # 2. run function ---------------------------------------------------------
 # The user has to provide a function to evaluate for each parameter vector
@@ -313,4 +313,4 @@ test_10p = run_experiments(
 )
 end   = date()
 
-saveRDS(object = test_10p, file = "simulation_results/test_10p.rds")
+saveRDS(object = test_10p, file = "simulation_results/test_10p_0410.rds")
