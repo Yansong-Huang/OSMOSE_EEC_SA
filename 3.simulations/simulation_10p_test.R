@@ -4,10 +4,6 @@
 rm(list = ls())
 require(osmose)
 
-# get pbs input -------------------------------------------------------
-args <- commandArgs(trailingOnly = TRUE)
-i <- as.numeric(args[1])
-
 # source("run_up/internal-functions.R")
 source("run_up/random-sampling.R")
 source("run_up/elementary-effects.R")
@@ -297,9 +293,19 @@ run_model = function(par,names, id, ...) {
 }
 
 
-run_experiments_test = function(X, FUN, i, names, ..., control=list()){
+run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
   if(is.null(control$output)) control$output = "doe"
   if(is.null(control$output.dir)) control$output.dir = getwd()
+  
+  # 如果 i 没有被指定，通过命令行参数获取
+  if (is.null(i)) {
+    args <- commandArgs(trailingOnly = TRUE)  # 获取命令行参数
+    if (length(args) > 0) {
+      i <- as.numeric(args[1])  # 将第一个参数转换为数值
+    } else {
+      stop("命令行参数缺失：请提供参数 i")
+    }
+  }
   
   FUN = match.fun(FUN)
   fn  = function(par, id=0) FUN(par, names, id, ...)
