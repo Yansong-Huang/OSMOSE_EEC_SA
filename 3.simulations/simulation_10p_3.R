@@ -1,4 +1,4 @@
-# simulation script for 10p scenario, split 1
+# simulation script for 10p scenario, split 5
 
 # Packages ----------------------------------------------------------------
 rm(list = ls())
@@ -32,7 +32,7 @@ species_codes <- setNames(0:15, species_list)
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
 
-doe = readRDS(file = "2.get-doe/doe/split_1_0413.rds")
+doe = readRDS(file = "2.get-doe/doe/split_3_0413.rds")
 
 # 2. run function ---------------------------------------------------------
 # The user has to provide a function to evaluate for each parameter vector
@@ -232,7 +232,7 @@ run_model = function(par,names, ...) {
   conf = read_osmose(input=config_file)
   
   # temporary output directory
-  output_temp = "output_temp_seq"
+  output_temp = "output_temp_seq_2"
   
   # Yansong: modify configuration according to doe
   conf_names <- names(conf)
@@ -304,7 +304,7 @@ test_10p = run_experiments(
   parallel = TRUE,
   control = list(
     output = "result",
-    output.dir = "simulation_results_seq"
+    output.dir = "simulation_results_seq_2"
   )
 )
 end   = date()
