@@ -28,9 +28,9 @@ split_doe <- function(X, n_splits = 4) {
 }
 
 # 读取原始列表
-doe_complete = readRDS(file = "2.get-doe/doe/split_3_0413.rds")
+doe_complete = readRDS(file = "2.get-doe/doe/test_10p_0410.rds")
 # 执行拆分
-splits <- split_doe(doe_complete, n_split=5)
+splits <- split_doe(doe_complete, n_split=10)
 # 分别保存
 for (j in 1:4) {
   saveRDS(splits[[j]],file.path("2.get-doe/doe",paste0("split_", j, "_0413.rds"))) 
