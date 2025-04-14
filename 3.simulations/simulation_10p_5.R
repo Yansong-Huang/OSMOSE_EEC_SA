@@ -1,3 +1,4 @@
+# simulation script for 10p scenario, split 5
 
 # Packages ----------------------------------------------------------------
 rm(list = ls())
@@ -31,7 +32,7 @@ species_codes <- setNames(0:15, species_list)
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
 
-doe = readRDS(file = "2.get-doe/doe/test_10p_0410.rds")
+doe = readRDS(file = "2.get-doe/doe/split_5_0413.rds")
 
 # 2. run function ---------------------------------------------------------
 # The user has to provide a function to evaluate for each parameter vector
@@ -280,17 +281,12 @@ run_model = function(par,names, ...) {
   unlink(output_temp, recursive = TRUE) # remove outputs after read the results of simulation
   
   # extract the biomass and yields variables (monthly data)
-  output = list(osmose.biomass        = get_var(data, what = "biomass", expected = FALSE),
-                osmose.abundance      = get_var(data, what = "abundance", expected = FALSE),
+  output = list(osmose.biomass        = get_var(data, what = "biomass", expected = FALSE), # expected = FALSE, no averaging
                 osmose.yield          = get_var(data, what = "yield", expected = FALSE),
-                osmose.yieldN         = get_var(data, what = "yieldN", expected = FALSE),
-                osmose.meanTL         = get_var(data, what = "meanTL", type="trophic", expected=FALSE),
-                osmose.meanLength     = get_var(data, what = "meanSize", expected = FALSE) #,
-                # osmose.sizeSpectrum   = get_var(data, what = "SizeSpectrum", expected=FALSE),
-                # osmose.sizeSpectrumN  = get_var(data, what = "SizeSpectrumN", expected=FALSE),
-                # osmose.sizeSpectrumB  = get_var(data, what = "SizeSpectrumB", expected=FALSE),
-                # osmose.sizeSpectrumC  = get_var(data, what = "SizeSpectrumC", expected=FALSE),
-                # osmose.sizeSpectrumY  = get_var(data, what = "SizeSpectrumY", expected=FALSE)
+                osmose.meanTL         = get_var(data, what = "meanTL", expected=FALSE),
+                osmose.meanLength     = get_var(data, what = "meanSize", expected = FALSE),
+                osmose.mortality      = get_var(data, what = "mortality", expected = FALSE),
+                osmose.yieldBySize    = get_var(data, what="yieldBySize",expected = FALSE)
                 )
   
   dir.create("simulation_results", recursive = TRUE, showWarnings = FALSE)
