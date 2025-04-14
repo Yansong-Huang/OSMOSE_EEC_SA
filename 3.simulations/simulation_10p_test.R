@@ -4,7 +4,9 @@
 rm(list = ls())
 require(osmose)
 
-# Source of scripts -------------------------------------------------------
+# get pbs input -------------------------------------------------------
+args <- commandArgs(trailingOnly = TRUE)
+i <- as.numeric(args[1])
 
 # source("run_up/internal-functions.R")
 source("run_up/random-sampling.R")
@@ -223,7 +225,7 @@ log_message <- function(...) {
 
 # 使用示例
 
-run_model = function(par,names, ..., id) {
+run_model = function(par,names, id, ...) {
   
   # set parameter names
   names(par) = names
@@ -295,31 +297,24 @@ run_model = function(par,names, ..., id) {
 }
 
 
-run_experiments_test = function(X, FUN, i = args[1],..., control=list()){
+run_experiments_test = function(X, FUN, i, names, ..., control=list()){
   if(is.null(control$output)) control$output = "doe"
   if(is.null(control$output.dir)) control$output.dir = getwd()
-  if(is.null(control$restart)) control$restart = "restart.txt"
   
-  # wrap FUN and ...
   FUN = match.fun(FUN)
-  fn  = function(par, id=0) FUN(par, ...) # non-parallel
+  fn  = function(par, id=0) FUN(par, names, id, ...)
   
-  # matrix of parameters
   par = aperm(X$doe, c(2,1,3))
   par = matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
   
-  r = dim(X$doe)[3]
-  
-  # store outputs in a list
-  # out = vector(mode = "list", length = nrow(par))
   Nmax = floor(log10(nrow(par))) + 1
   patt = sprintf("%s_%%0%dd.rds", control$output, Nmax)
   files = file.path(control$output.dir, sprintf(patt, seq_len(nrow(par))))
   
-  out = fn(par[i, , drop=FALSE], id=i-1)
-  
+  out = fn(par[i, , drop=FALSE], id=i)
   saveRDS(out, file=files[i])
 }
+
 
 
 # 3. save outputs ---------------------------------------------------------
