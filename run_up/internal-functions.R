@@ -224,7 +224,7 @@ run_experiments.doe = function(X, FUN, ..., parallel=FALSE, control=list()) {
   
   if(is.null(control$output)) control$output = "doe"
   if(is.null(control$output.dir)) control$output.dir = getwd()
-  if(is.null(control$restart)) control$restart = "restart.txt"
+  # if(is.null(control$restart)) control$restart = "restart.txt"
   
   # wrap FUN and ...
   FUN = match.fun(FUN)
@@ -242,16 +242,16 @@ run_experiments.doe = function(X, FUN, ..., parallel=FALSE, control=list()) {
   patt = sprintf("%s_%%0%dd.rds", control$output, Nmax)
   files = file.path(control$output.dir, sprintf(patt, seq_len(nrow(par))))
   
-  last.i = 0
-  if(file.exists(control$restart)) last.i = as.numeric(readLines(control$restart)[1])
+  # last.i = 0
+  # if(file.exists(control$restart)) last.i = as.numeric(readLines(control$restart)[1])
   
   for(i in seq_len(nrow(par))) {
   
-    if(i <= last.i) next # skip up to last.i  
+    # if(i <= last.i) next # skip up to last.i  
     tmp = fn(par[i, , drop=FALSE], .i=i-1)
     saveRDS(tmp, file=files[i])
     
-    writeLines(text=as.character(i), control$restart) # update last.i
+    # writeLines(text=as.character(i), control$restart) # update last.i
     
   }
   
