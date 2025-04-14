@@ -302,7 +302,7 @@ run_experiments_test = function(X, FUN, i = args[1],..., control=list()){
   
   # wrap FUN and ...
   FUN = match.fun(FUN)
-  fn  = function(par, .i=0) FUN(par, ...) # non-parallel
+  fn  = function(par, id=0) FUN(par, ...) # non-parallel
   
   # matrix of parameters
   par = aperm(X$doe, c(2,1,3))
