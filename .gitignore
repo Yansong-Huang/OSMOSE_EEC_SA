@@ -6,6 +6,7 @@
 /osmose-peru/*
 /output_temp/*
 /simulation_results/*
+/simulation_results_test/*
 osmose-eec/**/*modified*.csv
 *restart.txt
 
