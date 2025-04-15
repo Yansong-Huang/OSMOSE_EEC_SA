@@ -1,4 +1,6 @@
-# simulation script for 10p scenario, split 1
+# simulation script for 10p scenario, adapted for pbs job array
+# Yansong Huang, Criscely Lujan
+# 01/04/2025
 
 # Packages ----------------------------------------------------------------
 rm(list = ls())
@@ -217,9 +219,6 @@ log_message <- function(...) {
   cat(format(Sys.time(), "%H:%M:%S"), "-", ..., "\n")
 }
 
-# log_message("Replaced", length(par), "parameters.")
-
-# 使用示例
 
 run_model = function(par,names, id, ...) {
   
@@ -287,23 +286,22 @@ run_model = function(par,names, id, ...) {
                 osmose.yieldBySize    = get_var(data, what="yieldBySize",expected = FALSE)
                 )
   
-  dir.create("simulation_results_test", recursive = TRUE, showWarnings = FALSE)
-  
   return(output)
 }
-
 
 run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
   if(is.null(control$output)) control$output = "doe"
   if(is.null(control$output.dir)) control$output.dir = getwd()
   
-  # 如果 i 没有被指定，通过命令行参数获取
+  dir.create(control$output.dir, recursive = TRUE, showWarnings = FALSE)
+  
+  # if i is not assigned, pbs script should provide it
   if (is.null(i)) {
-    args <- commandArgs(trailingOnly = TRUE)  # 获取命令行参数
+    args <- commandArgs(trailingOnly = TRUE)  # get argument from pbs script
     if (length(args) > 0) {
-      i <- as.numeric(args[1])  # 将第一个参数转换为数值
+      i <- as.numeric(args[1])  # transform the first argument to number
     } else {
-      stop("命令行参数缺失：请提供参数 i")
+      stop("please provide index in pbs script")
     }
   }
   
