@@ -11,7 +11,7 @@ simu_results = list.files(path = input_dir, pattern = "\\.rds$", full.names = TR
 # Indicators outputs ------------------------------------------------------
 
 # indicator outputs
-out_meanLength                = list()
+out_meanLength            = list()
 out_meanTL                = list()
 out_lfi40                 = list()
 
