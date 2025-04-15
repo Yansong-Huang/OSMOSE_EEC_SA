@@ -85,7 +85,7 @@
 #indicator 7
 .LFI = function(biomass, sizeSpectrumB, thr){
   
-  sizes = as.numeric(colnames(sizeSpectrumB$anchovy))
+  sizes = as.numeric(colnames(sizeSpectrumB[[1]]))
   marks = sizes + 0.5*mean(diff(sizes))
   
   new_sizes = sizeSpectrumB
