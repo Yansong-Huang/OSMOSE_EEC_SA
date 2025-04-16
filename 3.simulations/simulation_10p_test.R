@@ -297,9 +297,9 @@ run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
   
   # if i is not assigned, pbs script should provide it
   if (is.null(i)) {
-    args <- commandArgs(trailingOnly = TRUE)  # get argument from pbs script
+    args <- commandArgs(trailingOnly = TRUE)
     if (length(args) > 0) {
-      i <- as.numeric(args[1])  # transform the first argument to number
+      i <- as.numeric(args[1])
     } else {
       stop("please provide index in pbs script")
     }
@@ -308,14 +308,27 @@ run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
   FUN = match.fun(FUN)
   fn  = function(par, id=0) FUN(par, names, id, ...)
   
-  par = aperm(X$doe, c(2,1,3))
-  par = matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
+  # 动态提取 par[i,]
+  dimx <- dim(X$doe)
+  p <- dimx[1]
+  L <- dimx[2]
+  R <- dimx[3]
   
-  Nmax = floor(log10(nrow(par))) + 1
+  N <- L * R
+  if (i > N) stop("Index i out of bounds")
+  
+  # 找到对应 l, r
+  l <- ((i - 1) %% L) + 1
+  r <- ((i - 1) %/% L) + 1
+  
+  par_i <- matrix(X$doe[, l, r], nrow=1)
+  
+  # 文件命名
+  Nmax = floor(log10(N)) + 1
   patt = sprintf("%s_%%0%dd.rds", control$output, Nmax)
-  files = file.path(control$output.dir, sprintf(patt, seq_len(nrow(par))))
+  files = file.path(control$output.dir, sprintf(patt, seq_len(N)))
   
-  out = fn(par[i, , drop=FALSE], id=i)
+  out = fn(par_i, id=i)
   saveRDS(out, file=files[i])
 }
 
@@ -327,13 +340,14 @@ start = date()
 test_10p = run_experiments_test(
   X = doe,
   FUN = run_model,
+  # i = 5,
   names = doe$parameter,
   parallel = TRUE,
   control = list(
     output = "result",
-    output.dir = "simulation_results_test"
+    output.dir = "simulation_results_test_0415"
   )
 )
 end   = date()
 
-saveRDS(object = test_10p, file = "simulation_results/test_10p_0410.rds")
+saveRDS(object = test_10p, file = "simulation_results/test_10p_0415.rds")
