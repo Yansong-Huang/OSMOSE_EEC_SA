@@ -102,7 +102,7 @@ osmose.user.catchability.fsh3.sp15,0.0885333743275272
 
 simulation.ncpu,1
 simulation.nresource,11
-simulation.nsimulation,10
+simulation.nsimulation,1
 simulation.nspecies,16
 simulation.time.ndtperyear,24
 simulation.time.nyear,20
@@ -829,14 +829,14 @@ output.cutoff.age.sp14,0.5
 output.cutoff.age.sp15,0.5
 output.cutoff.enabled,TRUE
 output.abundance.enabled,FALSE
-output.biomass.enabled,TRUE
+output.biomass.enabled,FALSE
 output.diet.composition.enabled,FALSE
 output.diet.pressure.enabled,FALSE
 output.diet.stage.structure,size
 
-output.mortality.enabled,TRUE
-output.size.catch.enabled,TRUE
-output.size.enabled,TRUE
+output.mortality.enabled,FALSE
+output.size.catch.enabled,FALSE
+output.size.enabled,FALSE
 output.biomass.bysize.enabled,FALSE
 output.abundance.bysize.enabled,FALSE
 output.distrib.bysize.max,125
@@ -845,23 +845,23 @@ output.distrib.bysize.incr,5
 output.spatial.enabled,FALSE
 output.spatial.ltl.enabled,FALSE
 output.tl.catch.enabled,FALSE
-output.tl.enabled,TRUE
+output.tl.enabled,FALSE
 output.meantl.byage.enabled,FALSE
 output.meantl.bysize.enabled,FALSE
 output.biomass.bytl.enabled,FALSE
 output.yield.abundance.enabled,FALSE
-output.yield.biomass.enabled,TRUE
-output.biomass.byage.enabled,TRUE
+output.yield.biomass.enabled,FALSE
+output.biomass.byage.enabled,FALSE
 output.abundance.byage.enabled,FALSE
 output.mortality.perspecies.byage.enabled,FALSE
 output.mortality.perspecies.bysize.enabled,FALSE
 output.mortality.additional.bysize.enabled,FALSE
-output.mortality.additional.byage.enabled,TRUE
+output.mortality.additional.byage.enabled,FALSE
 output.mortality.additionaln.bysize.enabled,FALSE
 output.mortality.additionaln.byage.enabled,FALSE
 output.yield.abundance.bysize.enabled,FALSE
-output.yield.biomass.bysize.enabled,TRUE
-output.meansize.byage.enabled,TRUE
+output.yield.biomass.bysize.enabled,FALSE
+output.meansize.byage.enabled,FALSE
 output.yield.abundance.byage.enabled,FALSE
 output.yield.biomass.byage.enabled,FALSE
 output.diet.composition.byage.enabled,FALSE
