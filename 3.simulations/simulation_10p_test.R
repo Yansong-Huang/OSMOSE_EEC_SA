@@ -33,6 +33,11 @@ species_codes <- setNames(0:15, species_list)
 # Building the matrix with the design of experiments (doe)
 
 doe = readRDS(file = "2.get-doe/doe/split_3_0413.rds")
+# 假设 X 已经定义好
+# 一次性转换，注意维度 c(2,1,3)
+par <- aperm(doe$doe, c(2,1,3))
+par <- matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
+
 
 # 2. run function ---------------------------------------------------------
 # The user has to provide a function to evaluate for each parameter vector
@@ -289,13 +294,12 @@ run_model = function(par,names, id, ...) {
   return(output)
 }
 
-run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
-  if(is.null(control$output)) control$output = "doe"
-  if(is.null(control$output.dir)) control$output.dir = getwd()
+run_experiments_test <- function(par, FUN, i=NULL, names, ..., control=list()) {
+  if (is.null(control$output)) control$output = "doe"
+  if (is.null(control$output.dir)) control$output.dir = getwd()
   
   dir.create(control$output.dir, recursive = TRUE, showWarnings = FALSE)
   
-  # if i is not assigned, pbs script should provide it
   if (is.null(i)) {
     args <- commandArgs(trailingOnly = TRUE)
     if (length(args) > 0) {
@@ -305,30 +309,14 @@ run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
     }
   }
   
-  FUN = match.fun(FUN)
-  fn  = function(par, id=0) FUN(par, names, id, ...)
+  FUN <- match.fun(FUN)
+  fn  <- function(par_row, id=0) FUN(par_row, names, id, ...)
   
-  # 动态提取 par[i,]
-  dimx <- dim(X$doe)
-  p <- dimx[1]
-  L <- dimx[2]
-  R <- dimx[3]
+  Nmax <- floor(log10(nrow(par))) + 1
+  patt <- sprintf("%s_%%0%dd.rds", control$output, Nmax)
+  files <- file.path(control$output.dir, sprintf(patt, seq_len(nrow(par))))
   
-  N <- L * R
-  if (i > N) stop("Index i out of bounds")
-  
-  # 找到对应 l, r
-  l <- ((i - 1) %% L) + 1
-  r <- ((i - 1) %/% L) + 1
-  
-  par_i <- matrix(X$doe[, l, r], nrow=1)
-  
-  # 文件命名
-  Nmax = floor(log10(N)) + 1
-  patt = sprintf("%s_%%0%dd.rds", control$output, Nmax)
-  files = file.path(control$output.dir, sprintf(patt, seq_len(N)))
-  
-  out = fn(par_i, id=i)
+  out <- fn(par[i, , drop=FALSE], id=i)
   saveRDS(out, file=files[i])
 }
 
@@ -338,7 +326,7 @@ run_experiments_test = function(X, FUN, i=NULL, names, ..., control=list()){
 
 start = date()
 test_10p = run_experiments_test(
-  X = doe,
+  par = par,
   FUN = run_model,
   # i = 5,
   names = doe$parameter,
