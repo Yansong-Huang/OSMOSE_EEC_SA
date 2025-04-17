@@ -836,7 +836,7 @@ output.diet.stage.structure,size
 
 output.mortality.enabled,TRUE
 output.size.catch.enabled,FALSE
-output.size.enabled,FALSE
+output.size.enabled,TRUE
 output.biomass.bysize.enabled,FALSE
 output.abundance.bysize.enabled,FALSE
 output.distrib.bysize.max,125
