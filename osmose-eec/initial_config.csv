@@ -102,7 +102,7 @@ osmose.user.catchability.fsh3.sp15,0.0885333743275272
 
 simulation.ncpu,1
 simulation.nresource,11
-simulation.nsimulation,1
+simulation.nsimulation,10
 simulation.nspecies,16
 simulation.time.ndtperyear,24
 simulation.time.nyear,20
