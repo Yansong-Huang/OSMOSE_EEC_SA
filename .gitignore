@@ -4,9 +4,8 @@
 .Ruserdata
 
 osmose-eec/**/*modified*.csv
-output_temp/*
-simulation_results/*
-simulation_results_test/*
+output_temp*/*
+simulation_results*/*
 output_baseline/*
 4.indicators/indicators_output/*
 5.baseline/indicators_baseline/*
