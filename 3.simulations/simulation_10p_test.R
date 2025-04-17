@@ -6,9 +6,8 @@
 rm(list = ls())
 require(osmose)
 
-# source("run_up/internal-functions.R")
-source("run_up/random-sampling.R")
-source("run_up/elementary-effects.R")
+# source("run_up/random-sampling.R")
+# source("run_up/elementary-effects.R")
 source("run_up/methods.R")
 source("run_up/auxiliar.R")
 
@@ -33,8 +32,7 @@ species_codes <- setNames(0:15, species_list)
 # Building the matrix with the design of experiments (doe)
 
 doe = readRDS(file = "2.get-doe/doe/split_3_0413.rds")
-# 假设 X 已经定义好
-# 一次性转换，注意维度 c(2,1,3)
+# 一次性转换维度 c(2,1,3)
 par <- aperm(doe$doe, c(2,1,3))
 par <- matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
 
@@ -158,7 +156,7 @@ replace_predation_sizeratio <- function(conf, par) {
   return(conf)
 }
 
-update_larval_mortality <- function(species_name, par, conf) {
+update_larval_mortality <- function(species_name, par, conf, id) {
   # 获取物种代码
   sp_code <- species_codes[species_name]
   
@@ -180,7 +178,7 @@ update_larval_mortality <- function(species_name, par, conf) {
   larvalMortality.sp$x = new_x
   
   # 保存修改后的数据
-  modified_file <- paste0("mortality/modified_larval_mortality-sp", sp_code, ".csv")
+  modified_file <- paste0("mortality/modified_larval_mortality_sp", sp_code,"_",id, ".csv")
   write.table(larvalMortality.sp, file = file.path(config_dir, modified_file), row.names = FALSE, sep = ",")
   
   # 更新配置文件
@@ -189,7 +187,7 @@ update_larval_mortality <- function(species_name, par, conf) {
   return(conf)  # 返回更新后的配置
 }
 
-update_catchability_matrix <- function(conf, par) {
+update_catchability_matrix <- function(conf, par, id) {
   # 读取原矩阵
   file_path <- file.path(config_dir, conf["fisheries.catchability.file"])
   catch_matrix <- read.csv(file_path, row.names = 1, check.names = FALSE)
@@ -209,7 +207,7 @@ update_catchability_matrix <- function(conf, par) {
   }
   
   # 写入新文件
-  modified_file <- "fishing/modified_eec_fisheries_catchability.csv"
+  modified_file <- paste0("fishing/modified_eec_fisheries_catchability","_",id,".csv")
   write.table(catch_matrix,
               file = file.path(config_dir, modified_file),
               sep = ",", row.names = TRUE, col.names = NA)
@@ -252,11 +250,11 @@ run_model = function(par,names, id, ...) {
   conf <- replace_predation_sizeratio(conf, par)
  
   # Manually changes about larval mortality
-  conf <- update_larval_mortality("sole", par, conf)  
-  conf <- update_larval_mortality("plaice", par, conf)  
+  conf <- update_larval_mortality("sole", par, conf, id)  
+  conf <- update_larval_mortality("plaice", par, conf, id)  
   
   # catchability 
-  conf <- update_catchability_matrix(conf, par)
+  conf <- update_catchability_matrix(conf, par, id)
   
   # maturity size
   conf <- replace_maturity_size(conf, par)
@@ -265,7 +263,8 @@ run_model = function(par,names, id, ...) {
   conf <- replace_t0(conf, par)
     
   # NEW configuration file
-  write_osmose(conf, file = file.path(config_dir, "modified_config.csv"),sep = ",")
+  name_new_config <- paste0("modified_config_",id,".csv")
+  write_osmose(conf, file = file.path(config_dir, name_new_config),sep = ",")
   
   save_conf <- function(conf, i) {
     out_path <- file.path(config_dir, sprintf("conf_simulation_%03d.csv", i))
@@ -275,7 +274,7 @@ run_model = function(par,names, id, ...) {
   
   # run Osmose Model
   
-  new_config <- file.path(config_dir, "modified_config.csv")
+  new_config <- file.path(config_dir, name_new_config)
   run_osmose(input = new_config, output = output_temp, osmose = jar_file, version = "4.4.0")
   
   # read Osmose outputs 
@@ -288,7 +287,7 @@ run_model = function(par,names, id, ...) {
                 osmose.meanTL         = get_var(data, what = "meanTL", expected=FALSE),
                 osmose.meanLength     = get_var(data, what = "meanSize", expected = FALSE),
                 osmose.mortality      = get_var(data, what = "mortality", expected = FALSE),
-                osmose.yieldBySize    = get_var(data, what="yieldBySize",expected = FALSE)
+                osmose.yieldBySize    = get_var(data, what = "yieldBySize",expected = FALSE)
                 )
   
   return(output)
@@ -328,7 +327,7 @@ start = date()
 test_10p = run_experiments_test(
   par = par,
   FUN = run_model,
-  # i = 5,
+  i = 55,
   names = doe$parameter,
   parallel = TRUE,
   control = list(
