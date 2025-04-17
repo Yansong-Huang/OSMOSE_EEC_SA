@@ -829,12 +829,12 @@ output.cutoff.age.sp14,0.5
 output.cutoff.age.sp15,0.5
 output.cutoff.enabled,TRUE
 output.abundance.enabled,FALSE
-output.biomass.enabled,FALSE
+output.biomass.enabled,TRUE
 output.diet.composition.enabled,FALSE
 output.diet.pressure.enabled,FALSE
 output.diet.stage.structure,size
 
-output.mortality.enabled,FALSE
+output.mortality.enabled,TRUE
 output.size.catch.enabled,FALSE
 output.size.enabled,FALSE
 output.biomass.bysize.enabled,FALSE
@@ -845,12 +845,12 @@ output.distrib.bysize.incr,5
 output.spatial.enabled,FALSE
 output.spatial.ltl.enabled,FALSE
 output.tl.catch.enabled,FALSE
-output.tl.enabled,FALSE
+output.tl.enabled,TRUE
 output.meantl.byage.enabled,FALSE
 output.meantl.bysize.enabled,FALSE
 output.biomass.bytl.enabled,FALSE
 output.yield.abundance.enabled,FALSE
-output.yield.biomass.enabled,FALSE
+output.yield.biomass.enabled,TRUE
 output.biomass.byage.enabled,FALSE
 output.abundance.byage.enabled,FALSE
 output.mortality.perspecies.byage.enabled,FALSE
@@ -860,8 +860,8 @@ output.mortality.additional.byage.enabled,FALSE
 output.mortality.additionaln.bysize.enabled,FALSE
 output.mortality.additionaln.byage.enabled,FALSE
 output.yield.abundance.bysize.enabled,FALSE
-output.yield.biomass.bysize.enabled,FALSE
-output.meansize.byage.enabled,FALSE
+output.yield.biomass.bysize.enabled,TRUE
+output.meansize.byage.enabled,TRUE
 output.yield.abundance.byage.enabled,FALSE
 output.yield.biomass.byage.enabled,FALSE
 output.diet.composition.byage.enabled,FALSE
