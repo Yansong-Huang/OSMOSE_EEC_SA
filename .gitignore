@@ -11,4 +11,5 @@ output_baseline/*
 4.indicators/indicators_output/*
 5.baseline/indicators_baseline/*
 *restart.txt
+*.log
 
