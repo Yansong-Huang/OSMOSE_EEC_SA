@@ -1,10 +1,10 @@
 #!/bin/csh
-#PBS -N simulation
+#PBS -N simulation_osmose
 #PBS -q sequentiel
-#PBS -l mem=15g
+#PBS -l mem=14g
 #PBS -l ncpus=1
 #PBS -l walltime=2:00:00
-#PBS -J 450-550
+#PBS -J 82-181
 cd $PBS_O_WORKDIR
 
 source /usr/share/Modules/3.2.10/init/csh
@@ -12,3 +12,6 @@ setenv R_LIBS /home1/datawork/yhuang/R/
 
 module load R
 Rscript 3.simulations/simulation_10p_test.R $PBS_ARRAY_INDEX  >>& simulation_10p_test.log
+
+/bin/rm -f $PBS_JOBNAME.o*
+
