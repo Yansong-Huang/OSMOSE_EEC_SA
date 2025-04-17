@@ -1,3 +1,7 @@
+# Transform the large doe file and save useful information for the simulation 
+# Yansong Huang
+# 15/04/2025
+
 # read doe (design of experiments) 
 doe = readRDS(file = "2.get-doe/doe/doe_0417.rds")
 
