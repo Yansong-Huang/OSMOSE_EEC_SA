@@ -30,11 +30,11 @@ species_codes <- setNames(0:15, species_list)
 
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
-
-doe = readRDS(file = "2.get-doe/doe/split_3_0413.rds")
+par_names = readRDS(file = "2.get-doe/doe/par_names_0417.rds")
+par_values = readRDS(file = "2.get-doe/doe/doe_0417_transformed.rds")
 # 一次性转换维度 c(2,1,3)
-par <- aperm(doe$doe, c(2,1,3))
-par <- matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
+# par <- aperm(doe$doe, c(2,1,3))
+# par <- matrix(par, nrow=prod(dim(par)[-1]), ncol=dim(par)[1], byrow=TRUE)
 
 
 # 2. run function ---------------------------------------------------------
@@ -218,11 +218,6 @@ update_catchability_matrix <- function(conf, par, id) {
   return(conf)
 }
 
-log_message <- function(...) {
-  cat(format(Sys.time(), "%H:%M:%S"), "-", ..., "\n")
-}
-
-
 run_model = function(par,names, id, ...) {
   
   # set parameter names
@@ -239,7 +234,7 @@ run_model = function(par,names, id, ...) {
   par_names  <- names(par)
   
   # 1. change following  parameters
-  # predation.efficiency.critical predation.ingestion.rate.max mortality.starvation.rate.max species.egg.size
+  # mortality.starvation.rate.max 
   # species.sexratio species.k species.length2weight.condition.factor species.linf species.maturity.size
   # species.vonbertalanffy.threshold.age fisheries.rate.base
   common_names <- intersect(conf_names, par_names)
@@ -324,14 +319,14 @@ run_experiments_test <- function(par, FUN, i=NULL, names, ..., control=list()) {
 # 3. save outputs ---------------------------------------------------------
 
 test_10p = run_experiments_test(
-  par = par,
+  par = par_values,
   FUN = run_model,
-  # i = 55,
-  names = doe$parameter,
+  # i = 45599,
+  names = par_names,
   parallel = TRUE,
   control = list(
     output = "result",
-    output.dir = "simulation_results_test_0415"
+    output.dir = "simulation_results_test_0417"
   )
 )
 

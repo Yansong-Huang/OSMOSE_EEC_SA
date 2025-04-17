@@ -43,7 +43,7 @@ source("run_up/auxiliar.R")
   
   # 2. Doe (design of experiments) ------------------------------------------
   # Building the matrix with the design of experiments (doe)
-  doe = random_sampling(par = parametersData, r = 20, levels = 9, grid.jump = 9/17) # CHECK IT
+  doe = random_sampling(par = parametersData, r = 200, levels = 9, grid.jump = 9/17) # CHECK IT
   
-  saveRDS(object = doe, file = "2.get-doe/doe/test_10p_0410.rds")
+  saveRDS(object = doe, file = "2.get-doe/doe/doe_0417.rds")
 
