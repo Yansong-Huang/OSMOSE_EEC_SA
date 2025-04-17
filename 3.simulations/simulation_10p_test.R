@@ -343,7 +343,7 @@ clean_temp_files <- function(id) {
 test_10p = run_experiments_test(
   par = par_values,
   FUN = run_model,
-  i = 45599,
+  # i = 45599,
   names = par_names,
   parallel = TRUE,
   control = list(
