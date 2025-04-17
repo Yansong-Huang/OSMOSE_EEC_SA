@@ -323,7 +323,6 @@ run_experiments_test <- function(par, FUN, i=NULL, names, ..., control=list()) {
 
 # 3. save outputs ---------------------------------------------------------
 
-start = date()
 test_10p = run_experiments_test(
   par = par,
   FUN = run_model,
@@ -335,6 +334,14 @@ test_10p = run_experiments_test(
     output.dir = "simulation_results_test_0415"
   )
 )
-end   = date()
 
-saveRDS(object = test_10p, file = "simulation_results/test_10p_0415.rds")
+
+# 删除 osmose-eec 文件夹下的 modified_config*.csv
+file.remove(list.files(path = "osmose-eec", pattern = "^modified_config.*\\.csv$", full.names = TRUE))
+
+# 删除 osmose-eec/fishing 文件夹下的 modified_eec_fisheries_catchability*.csv
+file.remove(list.files(path = "osmose-eec/fishing", pattern = "^modified_eec_fisheries_catchability.*\\.csv$", full.names = TRUE))
+
+# 删除 osmose-eec/mortality 文件夹下的 modified_larval_mortality_sp*.csv
+file.remove(list.files(path = "osmose-eec/mortality", pattern = "^modified_larval_mortality_sp.*\\.csv$", full.names = TRUE))
+
