@@ -312,8 +312,30 @@ run_experiments_test <- function(par, FUN, i=NULL, names, ..., control=list()) {
   
   out <- fn(par[i, , drop=FALSE], id=i)
   saveRDS(out, file=files[i])
+  
+  clean_temp_files(id=i)
 }
 
+clean_temp_files <- function(id) {
+  # 删除 osmose-eec 文件夹下当前 id 的 modified_config 文件
+  config_file <- file.path("osmose-eec", paste0("modified_config_", id, ".csv"))
+  if (file.exists(config_file)) 
+    file.remove(config_file)
+  
+  # 删除 osmose-eec/fishing 文件夹下当前 id 的 modified_eec_fisheries_catchability 文件
+  fishing_file <- file.path("osmose-eec/fishing", paste0("modified_eec_fisheries_catchability_", id, ".csv"))
+  if (file.exists(fishing_file)) 
+    file.remove(fishing_file)
+  
+  # 删除 osmose-eec/mortality 文件夹下当前 id 的所有 modified_larval_mortality_sp*_id.csv 文件
+  mortality_files <- list.files(
+    path = "osmose-eec/mortality",
+    pattern = paste0("^modified_larval_mortality_sp.*_", id, "\\.csv$"),
+    full.names = TRUE
+  )
+  if (length(mortality_files) > 0) 
+    file.remove(mortality_files)
+}
 
 
 # 3. save outputs ---------------------------------------------------------
@@ -321,7 +343,7 @@ run_experiments_test <- function(par, FUN, i=NULL, names, ..., control=list()) {
 test_10p = run_experiments_test(
   par = par_values,
   FUN = run_model,
-  # i = 45599,
+  i = 45599,
   names = par_names,
   parallel = TRUE,
   control = list(
@@ -329,14 +351,4 @@ test_10p = run_experiments_test(
     output.dir = "simulation_results_test_0417"
   )
 )
-
-
-# 删除 osmose-eec 文件夹下的 modified_config*.csv
-file.remove(list.files(path = "osmose-eec", pattern = "^modified_config.*\\.csv$", full.names = TRUE))
-
-# 删除 osmose-eec/fishing 文件夹下的 modified_eec_fisheries_catchability*.csv
-file.remove(list.files(path = "osmose-eec/fishing", pattern = "^modified_eec_fisheries_catchability.*\\.csv$", full.names = TRUE))
-
-# 删除 osmose-eec/mortality 文件夹下的 modified_larval_mortality_sp*.csv
-file.remove(list.files(path = "osmose-eec/mortality", pattern = "^modified_larval_mortality_sp.*\\.csv$", full.names = TRUE))
 
