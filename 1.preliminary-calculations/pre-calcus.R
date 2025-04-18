@@ -256,7 +256,7 @@ larval_mortality_file_sp8 <- file.path(larval_mortality_dir, "larval_mortality-p
 larval_mortality_sp7 = read.csv(larval_mortality_file_sp7,col.names = c("time","value"))
 larval_mortality_sp8 = read.csv(larval_mortality_file_sp8,col.names = c("time","value"))
 
-# 某种取平均值的运算
+# 在对数空间计算几何均值
 get_mlx = function(larvalVector){
   
   lx  = log(larvalVector)
