@@ -32,7 +32,7 @@ split_doe <- function(complete_doe, n_splits = 4) {
 splits <- split_doe(doe_transformed_2, n_split=4)
 
 for (j in 1:4) {
-  saveRDS(splits[[j]],file.path("2.get-doe/doe",paste0("doe_0423_part", j, ".rds"))) 
+  saveRDS(splits[[j]],file.path("2.get-doe/doe",paste0("doe_0423_part_", j, ".rds"))) 
 }
 
 
