@@ -1,4 +1,4 @@
-# simulation script for 10p scenario, adapted for pbs job array
+# script Morris simulation of OSMOSE, adapted for pbs job array
 # Yansong Huang, Criscely Lujan
 # 01/04/2025
 
@@ -6,8 +6,6 @@
 rm(list = ls())
 require(osmose)
 
-# source("run_up/random-sampling.R")
-# source("run_up/elementary-effects.R")
 source("run_up/methods.R")
 source("run_up/auxiliar.R")
 
@@ -345,7 +343,7 @@ test_10p = run_experiments_test(
   parallel = TRUE,
   control = list(
     output = "result",
-    output.dir = "simulation_results"
+    output.dir = "morris_simulation_results"
   )
 )
 
