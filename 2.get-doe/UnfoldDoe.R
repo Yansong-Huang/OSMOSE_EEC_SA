@@ -1,4 +1,4 @@
-# Transform the large doe file and save useful information for the simulation 
+# Transform the large doe file and save parameter names for the simulation 
 # Yansong Huang
 # 15/04/2025
 
@@ -13,7 +13,7 @@ doe_transformed_2 = matrix(doe_transformed,
                            nrow=prod(dim(doe_transformed)[-1]),
                            ncol=dim(doe_transformed)[1],
                            byrow=TRUE)
-# split doe
+# split the matrix
 split_doe <- function(complete_doe, n_splits = 4) {
   r_total <- dim(complete_doe)[1]  # 总轨迹数量，比如196000
   split_size <- ceiling(r_total / n_splits)
