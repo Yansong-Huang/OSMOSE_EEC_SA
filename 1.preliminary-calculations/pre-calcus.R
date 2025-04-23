@@ -85,138 +85,6 @@ write.table(
   sep = ","
 )
 
-# 5. Starvation mortality --------------------------------------------
-starvation_mortality_all_sp <- get_par(conf,"mortality.starvation.rate.max")
-
-# 生成参数名
-starvation_mortality_names <- unlist(lapply(0:15, function(sp) {
-  paste0("mortality.starvation.rate.max.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-starvation_mortality_table <- data.frame(
-  parameter = starvation_mortality_names,
-  value = as.numeric(starvation_mortality_all_sp),
-  scale = rep("log", 16)
-)
-
-
-write.table(
-  starvation_mortality_table,
-  "1.preliminary-calculations/initial_parameters/starvationMortality.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
-
-# 6.   F4: von Bertalanffy threshold --------------------------------------------
-# 
-# vbThrs_all_sp <- get_par(conf, "species.vonbertalanffy.threshold.age")
-# lifeSpan_all_sp <- get_par(conf, "species.lifespan") 
-# vbThrs_reparam = as.numeric(vbThrs_all_sp) / as.numeric(lifeSpan_all_sp)
-# vbThrs_reparam = round(vbThrs_reparam, 8)
-# 
-# 
-# # 生成参数名
-# vbThreshold_names <- unlist(lapply(0:15, function(sp) {
-#   paste0("species.vonbertalanffy.threshold.age.sp",sp)
-# }))
-# 
-# # 加入其他信息，整理表格
-# vbThreshold_table <- data.frame(
-#   parameter = vbThreshold_names,
-#   value = vbThrs_reparam,
-#   scale = rep("logit", 16)
-# )
-# 
-# write.table(
-#   vbThreshold_table,
-#   "1.preliminary-calculations/initial_parameters/vbThreshold.csv",
-#   row.names = FALSE,
-#   col.names = FALSE,
-#   quote = FALSE,
-#   sep = ","
-# )
-
-
-# 7. Egg size --------------------------------------------
-egg_size_all_sp <- get_par(conf,"species.egg.size")
-
-# 生成参数名
-egg_size_names <- unlist(lapply(0:15, function(sp) {
-  paste0("species.egg.size.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-egg_size_table <- data.frame(
-  parameter = egg_size_names,
-  value = as.numeric(egg_size_all_sp),
-  scale = rep("log", 16)
-)
-
-
-write.table(
-  egg_size_table,
-  "1.preliminary-calculations/initial_parameters/eggSize.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
-
-# 8. Critical threshold of predation efficiency --------------------------------------------
-crit_pred_effic_all_sp <- get_par(conf,"predation.efficiency.critical")
-
-# 生成参数名
-crit_pred_effic_names <- unlist(lapply(0:15, function(sp) {
-  paste0("predation.efficiency.critical.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-crit_pred_effic_table <- data.frame(
-  parameter = crit_pred_effic_names,
-  value = as.numeric(crit_pred_effic_all_sp),
-  scale = rep("logit", 16)
-)
-
-
-write.table(
-  crit_pred_effic_table,
-  "1.preliminary-calculations/initial_parameters/critPredEffic.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
-
-
-# 9. Maximum rate of predation ingestion --------------------------------------------
-predation_ingestion_all_sp <- get_par(conf,"predation.ingestion.rate.max")
-
-# 生成参数名
-predation_ingestion_names <- unlist(lapply(0:15, function(sp) {
-  paste0("predation.ingestion.rate.max.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-predation_ingestion_table <- data.frame(
-  parameter = predation_ingestion_names,
-  value = as.numeric(predation_ingestion_all_sp),
-  scale = rep("log", 16)
-)
-
-
-write.table(
-  predation_ingestion_table,
-  "1.preliminary-calculations/initial_parameters/predationIngestion.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
-
-
 
 # 10. Additional natural mortality rate --------------------------------------------
 additional_mortality_all_sp <- get_par(conf,"mortality.additional.rate")
@@ -337,39 +205,10 @@ write.table(
 )
 
 
-
-# 13. Sex ratio --------------------------------------------
-sex_ratio_all_sp <- get_par(conf,"species.sexratio")
-
-# 生成参数名
-sex_ratio_names <- unlist(lapply(0:15, function(sp) {
-  paste0("species.sexratio.sp",sp)
-}))
-
-# 加入其他信息，整理表格
-sex_ratio_table <- data.frame(
-  parameter = sex_ratio_names,
-  value = as.numeric(sex_ratio_all_sp),
-  scale = rep("logit", 16)
-)
-
-
-write.table(
-  sex_ratio_table,
-  "1.preliminary-calculations/initial_parameters/sexRatio.csv",
-  row.names = FALSE,
-  col.names = FALSE,
-  quote = FALSE,
-  sep = ","
-)
-
-
-
-
 # 14.  L0 -----------------------------------------------------------------------
 # 读取配置数据
 t0_all_sp <- get_par(conf,"species.t0")
-K_all_sp <- get_par(conf,"species.K")
+K_all_sp <- get_par(conf,"species.k")
 Linf_all_sp <- get_par(conf,"species.linf")
 
 # 方程计算vb生长起始体长
@@ -419,10 +258,12 @@ write.table(
 
 # 15.K (von bertalanffy)                       :  --------------------------
 # K is not re-parametrized 
-# 配置数据已经读取
+# 配置数据读取
+K_all_sp <- get_par(conf,"species.K")
+
 # 生成参数名
 K_names <- unlist(lapply(c(0:15), function(sp) {
-  paste0("species.K.sp",sp) 
+  paste0("species.k.sp",sp) 
 }))
 
 
@@ -445,7 +286,8 @@ write.table(
 
 # 16.  Linf (von bertalanffy)                       :  --------------------------
 # Linf is not re-parametrized 
-# 配置数据已经读取
+# 配置数据读取
+Linf_all_sp <- get_par(conf,"species.linf")
 # 生成参数名
 Linf_names <- unlist(lapply(c(0:15), function(sp) {
   paste0("species.linf.sp",sp) 
