@@ -259,7 +259,7 @@ write.table(
 # 15.K (von bertalanffy)                       :  --------------------------
 # K is not re-parametrized 
 # 配置数据读取
-K_all_sp <- get_par(conf,"species.K")
+K_all_sp <- get_par(conf,"species.k")
 
 # 生成参数名
 K_names <- unlist(lapply(c(0:15), function(sp) {
