@@ -279,6 +279,7 @@ run_model = function(par,names, id, ...) {
                 osmose.meanTL         = get_var(data, what = "meanTL", expected=FALSE),
                 osmose.meanLength     = get_var(data, what = "meanSize", expected = FALSE),
                 osmose.mortality      = get_var(data, what = "mortality", expected = FALSE),
+                osmose.biomassBySize  = get_var(data, what = "biomassBySize",expected = FALSE),
                 osmose.yieldBySize    = get_var(data, what = "yieldBySize",expected = FALSE)
                 )
   
