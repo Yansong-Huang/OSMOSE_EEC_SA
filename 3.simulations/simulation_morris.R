@@ -10,6 +10,7 @@ source("run_up/methods.R")
 source("run_up/auxiliar.R")
 
 # 定义路径
+simu_set = 1
 config_dir  = "osmose-eec"
 main_file = "initial_config.csv"
 config_file = file.path(config_dir, main_file)
@@ -29,7 +30,7 @@ species_codes <- setNames(0:15, species_list)
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
 par_names = readRDS(file = "2.get-doe/doe/par_names_0423.rds")
-par_values = readRDS(file = "2.get-doe/doe/doe_0423_part_1.rds")
+par_values = readRDS(file = paste0("2.get-doe/doe/doe_0423_part_", simu_set, ".rds"))
 
 
 # 2. run function ---------------------------------------------------------
@@ -265,7 +266,8 @@ run_model = function(par,names, id, ...) {
   # run Osmose Model
   
   new_config <- file.path(config_dir, name_new_config)
-  run_osmose(input = new_config, output = output_temp, osmose = jar_file, version = "4.4.0")
+  dir.create("osmose-log", showWarnings = FALSE)
+  run_osmose(input = new_config, output = output_temp, osmose = jar_file, log = paste0("osmose-log/osmose_",id,".log"), version = "4.4.0")
   
   # read Osmose outputs 
   data = read_osmose(path = file.path(output_temp), version = "4.4.0")
@@ -342,7 +344,7 @@ test_10p = run_experiments_test(
   names = par_names,
   parallel = TRUE,
   control = list(
-    output = "result",
+    output = paste0("result_part_",simu_set),
     output.dir = "morris_simulation_results"
   )
 )
