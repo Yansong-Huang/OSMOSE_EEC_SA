@@ -29,8 +29,8 @@ species_codes <- setNames(0:15, species_list)
 
 # 1. Doe (design of experiments) ------------------------------------------
 # Building the matrix with the design of experiments (doe)
-par_names = readRDS(file = "2.get-doe/doe/par_names_0423.rds")
-par_values = readRDS(file = paste0("2.get-doe/doe/doe_0423_part_", simu_set, ".rds"))
+par_names = readRDS(file = "2.get-doe/doe/par_names_0425.rds")
+par_values = readRDS(file = paste0("2.get-doe/doe/doe_0425_part_", simu_set, ".rds"))
 
 
 # 2. run function ---------------------------------------------------------

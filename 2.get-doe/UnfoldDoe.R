@@ -3,7 +3,7 @@
 # 15/04/2025
 
 # read doe (design of experiments) 
-doe = readRDS(file = "2.get-doe/doe/doe_0423.rds")
+doe = readRDS(file = "2.get-doe/doe/doe_0425.rds")
 
 # transform doe matrix (copied from run_experiments_test() function)
 # after transformation, matrix row are simulations, columns are parameters
@@ -32,11 +32,11 @@ split_doe <- function(complete_doe, n_splits = 4) {
 splits <- split_doe(doe_transformed_2, n_split=4)
 
 for (j in 1:4) {
-  saveRDS(splits[[j]],file.path("2.get-doe/doe",paste0("doe_0423_part_", j, ".rds"))) 
+  saveRDS(splits[[j]],file.path("2.get-doe/doe",paste0("doe_0425_part_", j, ".rds"))) 
 }
 
 
 # save parameter names
 parameter_names <- doe$parameter
 
-saveRDS(parameter_names, "2.get-doe/doe/par_names_0423.rds")
+saveRDS(parameter_names, "2.get-doe/doe/par_names_0425.rds")
