@@ -7,8 +7,9 @@ osmose-eec/**/*modified*.csv
 output_temp*/*
 *simulation_results*/*
 output_baseline/*
+output_replicate*/*
+*_output*/*
 4.indicators/indicators_output/*
 5.baseline/indicators_baseline/*
-*restart.txt
 *.log
-
+*.png
