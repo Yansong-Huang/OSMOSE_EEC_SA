@@ -1,78 +1,102 @@
-## ---------------------------------------------------------------
-##  0. 准备环境
-## ---------------------------------------------------------------
-rm(list = ls())
-library(data.table)
-
-## ---------------------------------------------------------------
-##  1. 读取数据
-## ---------------------------------------------------------------
-LFI_list <- readRDS("4.indicators/indicators_output/lfi40.rds")    # 长度 196000
-sim_key  <- fread("4.indicators/indicators_output/simulation_key.csv")  # 196000 行
-param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")   # 长度 195
-
-stopifnot(length(LFI_list) == nrow(sim_key))
-
-n_step <- length(param_names)+1
-n_repl <- max(sim_key$replicate)
-n_param <- length(param_names)
-
-## ---------------------------------------------------------------
-##  2. 把每个模拟的 20×10 矩阵 → 单值 Ȳ  (先对 20 年取均值，再对 10 重复取均值)
-## ---------------------------------------------------------------
-avg_LFI <- vapply(LFI_list, function(mat) {
-  mean(colMeans(mat, na.rm = TRUE), na.rm = TRUE)    # 20 年 → 1×10，再 10 → 1
-}, numeric(1))
-
-sim_key[, Y_mean := avg_LFI]        # 把指标贴到键表中
-rm(LFI_list, avg_LFI)               # 省内存
-
-## ---------------------------------------------------------------
-##  3. 计算逐步 ΔY 及 ΔX
-##      - ΔY: 相邻两步 Y_mean 差
-##      - ΔX: Morris 设计的标准化步长 Δ (因为已做无量纲格点)
-## ---------------------------------------------------------------
-grid_jump <- 4       # 你的 Morris 设置（示例值）
-levels    <- 8       # 你的 Morris 设置（示例值）
-Delta     <- grid_jump / (levels - 1)   # 全局常数，≈ 0.571 等
-
-## 先把键表按 replicate+step 排成 196×n_repl 的矩阵形索引
-sim_mat_index <- matrix(sim_key$simulation_id, nrow = n_step, ncol = n_repl)
-
-## ΔY 矩阵 (195 × n_repl)
-delta_Y <- sim_key$Y_mean[sim_mat_index[2:n_step, ]] -
-  sim_key$Y_mean[sim_mat_index[1:(n_step-1), ]]
-
-## 改变的参数索引同样 reshape 成矩阵，去掉第一步
-param_idx_mat <- matrix(sim_key$changed_param_idx,
-                        nrow = n_step, ncol = n_repl)[2:n_step, ]
-
-## ---------------------------------------------------------------
-##  4. 把ΔY/Δ 归档到对应参数，计算 EE
-## ---------------------------------------------------------------
-EE_list <- vector("list", n_param)  # 每个参数一个 numeric 向量
-
-for (p in seq_len(n_param)) {
-  ee_vec <- delta_Y[param_idx_mat == p] / Delta     # 取到该参数所有 EE
-  EE_list[[p]] <- ee_vec
+# ---------------------------------------------------------------
+#  函数: compute_morris_EE
+# ---------------------------------------------------------------
+compute_morris_EE <- function(ind_list,
+                              sim_key,
+                              param_names,
+                              grid_jump,
+                              levels,
+                              # ---- 可选参数 ----
+                              agg_fun   = function(mat) mean(colMeans(mat, na.rm = TRUE), na.rm = TRUE),
+                              out_name  = "indicator",
+                              out_dir   = "5.elementary_effect") {
+  ## ------- 0. 基本尺寸 -------
+  n_step <- max(sim_key$step)
+  n_repl <- max(sim_key$replicate)
+  n_param <- length(param_names)
+  n_sim  <- length(ind_list)
+  stopifnot(n_sim == n_step * n_repl)
+  
+  ## ------- 1. 把每个模拟矩阵聚合为单值 Ȳ -------
+  Y_mean <- vapply(ind_list, agg_fun, numeric(1))
+  
+  sim_key[, Y_mean := Y_mean]   # 贴到键表
+  rm(ind_list, Y_mean); gc()
+  
+  ## ------- 2. ΔY & ΔX -------
+  Delta <- grid_jump / (levels - 1)           # 无量纲步长
+  sim_mat_idx <- matrix(sim_key$simulation_id, nrow = n_step, ncol = n_repl)
+  
+  delta_Y <- sim_key$Y_mean[sim_mat_idx[2:n_step, ]] -
+    sim_key$Y_mean[sim_mat_idx[1:(n_step-1), ]]
+  
+  param_idx_mat <- matrix(sim_key$changed_param_idx,
+                          nrow = n_step, ncol = n_repl)[2:n_step, ]
+  
+  ## ------- 3. 计算各参数 EE -------
+  EE_list <- vector("list", n_param)
+  for (p in seq_len(n_param)) {
+    EE_list[[p]] <- delta_Y[param_idx_mat == p] / Delta
+  }
+  
+  ## ------- 4. μ, μ*, σ 统计 -------
+  EE_stats <- data.table(
+    param_id   = seq_len(n_param),
+    param_name = param_names,
+    mu         = vapply(EE_list, mean,    numeric(1), na.rm = TRUE),
+    mu_star    = vapply(EE_list, function(x) mean(abs(x), na.rm = TRUE), numeric(1)),
+    sigma      = vapply(EE_list, sd,      numeric(1), na.rm = TRUE),
+    n_ee       = vapply(EE_list, function(x) sum(!is.na(x)), integer(1))
+  )
+  
+  ## ------- 5. 保存 -------
+  dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
+  fwrite(EE_stats, file = file.path(out_dir, paste0("EE_", out_name, "_stats.csv")))
+  saveRDS(EE_list,  file = file.path(out_dir, paste0("EE_", out_name, "_raw.rds")))
+  
+  message("✓ Elementary effects for ", out_name, " is saved in ", out_dir)
+  invisible(EE_stats)
 }
 
-## ---------------------------------------------------------------
-##  5. 统计 μ, μ*, σ
-## ---------------------------------------------------------------
-EE_stats <- data.table(
-  param_id   = seq_len(n_param),
-  param_name = param_names,
-  mu         = vapply(EE_list, mean,    numeric(1), na.rm = TRUE),
-  mu_star    = vapply(EE_list, function(x) mean(abs(x), na.rm = TRUE), numeric(1)),
-  sigma      = vapply(EE_list, sd,      numeric(1), na.rm = TRUE),
-  n_ee       = vapply(EE_list, function(x) sum(!is.na(x)), integer(1))
+library(data.table)
+
+# 1) 读取准备好的数据
+sim_key  <- fread("4.indicators/indicators_output/simulation_key.csv")
+param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
+
+# 2) LFI40
+LFI40_list <- readRDS("4.indicators/indicators_output/lfi40.rds")
+
+compute_morris_EE(
+  ind_list    = LFI40_list,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  out_name    = "LFI40"
 )
 
-## ---------------------------------------------------------------
-##  6. 保存结果
-## ---------------------------------------------------------------
-fwrite(EE_stats, file = "5.elementary_effect/EE_LFI40_stats.csv")
-saveRDS(EE_list,  file = "5.elementary_effect/EE_LFI40_raw.rds")
+# 3) 计算平均营养级 (meanTL)
+meanTL_list <- readRDS("4.indicators/indicators_output/meanTL.rds")
 
-message("✓ Elementary effects for LFI40 完成并保存！")
+compute_morris_EE(
+  ind_list    = meanTL_list,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  # 平均营养级同样是 20×10 矩阵，聚合函数可复用默认
+  out_name    = "meanTL"
+)
+
+# 4) 计算平均体长
+meanLength_list <- readRDS("4.indicators/indicators_output/meanLength.rds")
+
+compute_morris_EE(
+  ind_list    = meanLength_list,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  out_name    = "meanLength"
+)
