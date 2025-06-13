@@ -1,48 +1,105 @@
 library(data.table)
 library(ggplot2)
+library(viridis)  # 更美观的色带
+library(stringr)
+library(ggplot2)
 
-## --------------------------------
-## 1. 读取三类指标的 μ* 结果
-## --------------------------------
-EE_lfi      <- fread("5.elementary_effect/EE_LFI40_stats.csv")[, .(param_name, mu_star)]
-# EE_length   <- fread("5.elementary_effect/EE_meanLength_stats.csv")[, .(param_name, mu_star)]
-EE_trophic  <- fread("5.elementary_effect/EE_meanTL_stats.csv")[, .(param_name, mu_star)]
+plot_EE_heatmap <- function(
+    EE_stats,
+    value_col = "mu_star",
+    cluster_rows = FALSE,
+    cluster_cols = FALSE,
+    out_file = NULL,
+    base_width = 8,
+    row_height = 0.25,
+    title = "Elementary Effects (μ*)"
+) {
+  stopifnot(value_col %in% names(EE_stats))
+  
+  heat_dt <- dcast(EE_stats, param_name ~ species, value.var = value_col)
+  
+  # 保持param_name因子顺序
+  heat_dt[, param_name := factor(param_name, levels = levels(EE_stats$param_name))]
+  setorder(heat_dt, param_name)
+  
+  heat_mat <- as.matrix(heat_dt[, -1, with = FALSE])
+  rownames(heat_mat) <- heat_dt$param_name
+  
+  if (cluster_rows) {
+    row_order <- hclust(dist(heat_mat))$order
+    heat_mat <- heat_mat[row_order, , drop = FALSE]
+  }
+  if (cluster_cols) {
+    col_order <- hclust(dist(t(heat_mat)))$order
+    heat_mat <- heat_mat[, col_order, drop = FALSE]
+  }
+  
+  heat_long <- as.data.table(as.table(heat_mat))
+  setnames(heat_long, c("param_name", "species", "value"))
+  
+  # 保持y轴因子顺序
+  heat_long[, param_name := factor(param_name, levels = levels(EE_stats$param_name))]
+  
+  n_param <- length(levels(heat_long$param_name))
+  plot_height <- max(4, n_param * row_height)
+  
+  p <- ggplot(heat_long, aes(x = species, y = param_name, fill = value)) +
+    geom_tile(color = "white", width = 0.9, height = 0.9) +
+    scale_fill_gradient(name = value_col, low = "white", high = "black") +
+    theme_minimal(base_size = 12) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      axis.text.y = element_text(size = 9),
+      panel.grid = element_blank()
+    ) +
+    labs(x = "Species", y = "Parameter", title = title)
+  
+  if (!is.null(out_file)) {
+    ggsave(
+      filename = out_file,
+      plot = p,
+      width = base_width,
+      height = plot_height,
+      units = "in",
+      dpi = 300,
+      limitsize = FALSE
+    )
+    message("✓ Heatmap saved to: ", out_file)
+  } else {
+    print(p)
+  }
+  
+  invisible(p)
+}
 
-## 给列加标签
-EE_lfi[,      indicator := "LFI40"]
-# EE_length[,   indicator := "MeanLength"]
-EE_trophic[,  indicator := "MeanTL"]
+# ---- EE_stats 数据 ----
+EE_stats <- fread("5.elementary_effect/biomass/EE_biomass_stats.csv")
+# ---- EE_stats 是 data.table 且有 param_name 列 ----
 
-## --------------------------------
-## 2. 合并成长格式表
-## --------------------------------
-# EE_all <- rbindlist(list(EE_lfi, EE_length, EE_trophic))
-EE_all <- rbindlist(list(EE_lfi, EE_trophic))
-EE_all <- EE_all[!is.na(mu_star)]  # 移除NA（有些参数可能对某些指标无效）
+# 假设 EE_stats 中 param_name 是参数名称（如 predation.xx.sp0）
+# 提取 param_name 中的 sp 编号作为 sp_order（允许无 sp 的参数）
+EE_stats[, sp_order := str_extract(param_name, "sp\\d+")]
+EE_stats[, sp_order := as.integer(str_remove(sp_order, "sp"))]
 
-## --------------------------------
-## 3. 可选：对参数名排序（按总μ*影响力）
-## --------------------------------
-param_order <- EE_all[, .(total_mu_star = sum(mu_star, na.rm = TRUE)), by = param_name][
-  order(-total_mu_star), param_name]
+# 按 sp_order 数值排序，NA（无 sp 的参数）排在最后
+EE_stats[, sp_order_na := is.na(sp_order)]
+setorder(EE_stats, sp_order_na, sp_order, param_name)
+EE_stats[, sp_order_na := NULL]
 
-EE_all[, param_name := factor(param_name, levels = param_order)]
-# EE_all[, indicator := factor(indicator, levels = c("LFI40", "MeanLength", "MeanTL"))]
-EE_all[, indicator := factor(indicator, levels = c("LFI40", "MeanTL"))]
+# 现在 param_name 按排序好的顺序变成因子levels
+EE_stats[, param_name := factor(param_name, levels = unique(param_name))]
 
-## --------------------------------
-## 4. 画热图
-## --------------------------------
+# 可选：删除临时列
+EE_stats[, c("sp_index", "sp_order", "is_na_sp") := NULL]
 
-top_params <- head(param_order, 20)
-EE_all <- EE_all[param_name %in% top_params]
+plot_EE_heatmap(
+  EE_stats,
+  value_col = "mu_star",
+  cluster_rows = FALSE,  # 手动排序，不要再聚类
+  cluster_cols = TRUE,   # 可选
+  out_file = "5.elementary_effect/biomass/EE_heatmap_sorted_by_species.png",
+  base_width = 10,
+  row_height = 0.3,
+  title = "Biomass Effects Sorted by Species"
+)
 
-ggplot(EE_all, aes(x = indicator, y = param_name, fill = mu_star)) +
-  geom_tile() +
-  scale_fill_viridis_c(option = "C", name = expression(mu^"*")) +
-  labs(x = NULL, y = NULL, title = "Elementary Effects (μ*) by Parameter and Indicator") +
-  theme_minimal(base_size = 12) +
-  theme(
-    axis.text.y = element_text(size = 7),
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
