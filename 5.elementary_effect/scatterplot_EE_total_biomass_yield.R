@@ -47,7 +47,7 @@ EE_all[, rank_mu := frank(-mu_star), by = indicator]
 EE_combined_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_type)) +
   geom_abline(slope = c(0.1, 0.5, 1), intercept = 0, 
               linetype = "dashed", color = "grey60", show.legend = FALSE) +
-  geom_point(size = 2, alpha = 0.85) +
+  geom_point(size = 2, alpha = 0.6) +
   ggrepel::geom_text_repel(
     data = EE_all[rank_mu <= 10],
     aes(label = param_name),
@@ -58,26 +58,13 @@ EE_combined_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_typ
     segment.color = "grey50",
     show.legend = FALSE
   ) +
-  # ggrepel::geom_text_repel(
-  #   data = EE_all[rank_mu_min <= 5],
-  #   aes(label = param_name),
-  #   size = 3,
-  #   max.overlaps = 20,
-  #   box.padding = 0.15,
-  #   point.padding = 0.15,
-  #   force = 0.3,
-  #   nudge_y = -0.05,
-  #   color = "black",
-  #   segment.color = "grey40",
-  #   show.legend = FALSE
-  # )+
-  # geom_text(
-  #   data = labels_df,
-  #   aes(x = x, y = y, label = label),
-  #   color = "grey40",
-  #   size = 3,
-  #   inherit.aes = FALSE
-  # ) +
+  geom_text(
+    data = labels_df,
+    aes(x = x, y = y, label = label),
+    color = "grey40",
+    size = 3,
+    inherit.aes = FALSE
+  ) +
   facet_wrap(~indicator, scales = "free", ncol = 2) +
   labs(
     x = expression(mu["*"]),
@@ -96,4 +83,4 @@ EE_combined_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_typ
   )
 
 # ---- 保存图形 ----
-ggsave("figures/EE_biomass_yield_combined_test.png", plot = EE_combined_plot, width = 12, height = 5.5, dpi = 300)
+ggsave("figures/EE_biomass_yield_combined.png", plot = EE_combined_plot, width = 12, height = 5.5, dpi = 300)
