@@ -50,7 +50,8 @@ plot_EE_heatmap <- function(
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       axis.text.y = element_text(size = 9),
-      panel.grid = element_blank()
+      panel.grid = element_blank(),
+      plot.background = element_rect(fill = "white", color = NA)
     ) +
     labs(x = "Species", y = "Parameter", title = title)
   
@@ -97,7 +98,7 @@ plot_EE_heatmap(
   value_col = "mu_star",
   cluster_rows = FALSE,  # 手动排序，不要再聚类
   cluster_cols = TRUE,   # 可选
-  out_file = "5.elementary_effect/biomass/EE_heatmap_sorted_by_species.png",
+  out_file = "figures/EE_heatmap_sorted_by_species.png",
   base_width = 10,
   row_height = 0.3,
   title = "Biomass Effects Sorted by Species"

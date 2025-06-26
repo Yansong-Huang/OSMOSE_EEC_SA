@@ -69,8 +69,8 @@ compute_specieswise_EE <- function(
   
   ## ------- 6. 输出结果 -------
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  fwrite(EE_stats_all, file = file.path(out_dir, paste0("EE_", out_name, "_stats.csv")))
-  saveRDS(EE_list_all, file = file.path(out_dir, paste0("EE_", out_name, "_raw.rds")))
+  fwrite(EE_stats_all, file = file.path(out_dir, paste0("EE_", out_name, "by_species_stats.csv")))
+  saveRDS(EE_list_all, file = file.path(out_dir, paste0("EE_", out_name, "by_species_raw.rds")))
   
   if (verbose) {
     message("✓ Species-wise elementary effects for ", out_name, " are saved in ", out_dir)
@@ -92,7 +92,7 @@ compute_specieswise_EE(
   grid_jump   = 4,
   levels      = 8,
   out_name    = "biomass",
-  out_dir     = "5.elementary_effect/biomass"
+  out_dir     = "5.elementary_effect/EE_outputs"
 )
 
 
