@@ -24,8 +24,6 @@ EE_all[, param_type := fcase(
   default = "Other"
 )]
 
-# ---- 排除 "Other" 类 ----
-EE_all <- EE_all[param_type != "Other"]
 
 # ---- 计算每个面板最大 mu_star，用于放标签 ----
 max_vals <- EE_all[, .(max_mu = max(mu_star, na.rm = TRUE)), by = indicator]
@@ -39,12 +37,19 @@ labels_df <- max_vals[, .(
   y = max_mu * 0.9 * y_multipliers
 ), by = indicator]
 
+labels_df_log <- max_vals[, .(
+  label = label_types,
+  x = max_mu * 0.9,
+  y = exp(log(max_mu * 0.9) + log(y_multipliers))
+), by = indicator]
+
+
 # ---- 排名，用于标注前 10 大和后 5 小 ----
 EE_all[, rank_mu := frank(-mu_star), by = indicator]
 # EE_all[, rank_mu_min := frank(mu_star), by = indicator]     # 最小效应
 
 # ---- 绘图 ----
-EE_combined_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_type)) +
+EE_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_type)) +
   geom_abline(slope = c(0.1, 0.5, 1), intercept = 0, 
               linetype = "dashed", color = "grey60", show.legend = FALSE) +
   geom_point(size = 2, alpha = 0.6) +
@@ -82,5 +87,48 @@ EE_combined_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_typ
     plot.background = element_rect(fill = "white", color = NA)
   )
 
+EE_log_plot <- ggplot(EE_all, aes(x = mu_star, y = sigma, color = param_type)) +
+  geom_function(fun = function(x) x, linetype = "dashed", color = "grey60") + 
+  geom_function(fun = function(x) 0.5 * x, linetype = "dashed", color = "grey60") + 
+  geom_function(fun = function(x) 0.1 * x, linetype = "dashed", color = "grey60")+
+  geom_point(size = 2, alpha = 0.6) +
+  scale_x_log10(labels = label_number()) +  # 对数 X 轴
+  scale_y_log10(labels = label_number()) +  # 对数 Y 轴
+  ggrepel::geom_text_repel(
+    data = EE_all[rank_mu <= 10],
+    aes(label = param_name),
+    max.overlaps = 20,
+    size = 3,
+    box.padding = 0.3,
+    force = 0.5,
+    segment.color = "grey50",
+    show.legend = FALSE
+  ) +
+  geom_text(
+    data = labels_df_log,
+    aes(x = x, y = y, label = label),
+    color = "grey40",
+    size = 3,
+    inherit.aes = FALSE
+  ) +
+  facet_wrap(~indicator, scales = "free", ncol = 2) +
+  labs(
+    x = expression(log[10]~mu["*"]),
+    y = expression(log[10]~sigma),
+    color = "Parameter Type",
+    # title = "Elementary Effects on Total Biomass and Yield"
+  ) +
+  scale_color_brewer(palette = "Set1") +
+  theme_minimal(base_size = 12) +
+  theme(
+    legend.position = "bottom",
+    panel.spacing = unit(1, "lines"),
+    strip.text = element_text(face = "bold"),
+    panel.background = element_rect(fill = "white", color = NA),
+    plot.background = element_rect(fill = "white", color = NA)
+  )
+
+
 # ---- 保存图形 ----
-ggsave("figures/EE_biomass_yield_combined.png", plot = EE_combined_plot, width = 12, height = 5.5, dpi = 300)
+ggsave("figures/EE_biomass_yield.png", plot = EE_plot, width = 12, height = 5.5, dpi = 300)
+ggsave("figures/EE_biomass_yield_log.png", plot = EE_log_plot, width = 12, height = 5.5, dpi = 300)
