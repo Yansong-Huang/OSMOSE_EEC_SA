@@ -1,9 +1,9 @@
 library(data.table)
 library(ggplot2)
 
-EE_LFI <- fread("5.elementary_effect/EE_LFI40_stats.csv")
-EE_mean_TL <- fread("5.elementary_effect/EE_meanTL_stats.csv")
-EE_mean_length <- fread("5.elementary_effect/EE_meanLength_stats.csv")
+EE_LFI <- fread("5.elementary_effect/EE_outputs/EE_LFI40_stats.csv")
+EE_mean_TL <- fread("5.elementary_effect/EE_outputs/EE_meanTL_stats.csv")
+EE_mean_length <- fread("5.elementary_effect/EE_outputs/EE_meanLength_stats.csv")
 
 
 # 合并三个数据集并添加指标标签
