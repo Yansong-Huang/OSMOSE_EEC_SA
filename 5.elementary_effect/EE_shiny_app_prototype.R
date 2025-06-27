@@ -2,6 +2,8 @@ library(shiny)
 library(data.table)
 library(ggplot2)
 library(scales)
+library(dplyr)
+library(ggrepel)
 
 # ---------- 读取并合并五类指标 ----------
 read_add_indicator <- function(path, indicator_name) {
@@ -55,8 +57,8 @@ ui <- fluidPage(
       actionButton("update_btn", "Confirm")
     ),
     mainPanel(
-      plotOutput("eePlot", height = "600px", click = "plot_click"),
-      verbatimTextOutput("click_info")
+      verbatimTextOutput("click_info"),
+      plotOutput("eePlot", height = "500px", click = "plot_click")
     )
   )
 )
@@ -72,7 +74,7 @@ server <- function(input, output, session) {
     "Fisheries"   = "#E41A1C",  # 红色（Set1[1]）
     "Mortality"   = "#4DAF4A",  # 绿色（Set1[3]）
     "Growth"      = "#377EB8",  # 蓝色（Set1[2]）
-    "Prey Field"  = "#FFFF33",  # 黄色（Set1[6]）
+    "Prey Field"  = "#FFFF10",  # 黄色（Set1[6]）
     "Predation"   = "#984EA3",  # 紫色（Set1[4]）
     "Other"       = "grey70"    # 灰色
   )
@@ -84,10 +86,15 @@ server <- function(input, output, session) {
     line_data <- data.table(mu_star = range(dt$mu_star, na.rm = TRUE))
     line_data[, sigma := mu_star]
     
+    # 获取 mu_star 前十的参数用于标签
+    top_labels <- dt %>% arrange(desc(mu_star)) %>% head(10)
+    
     p <- ggplot(dt, aes(x = mu_star, y = sigma, color = param_type)) +
       geom_line(data = line_data, aes(x = mu_star, y = sigma), 
                 inherit.aes = FALSE, linetype = "dashed", color = "grey60") +
       geom_point(size = 2, alpha = 0.6) +
+      geom_text_repel(data = top_labels, aes(label = param_name),
+                      size = 3, max.overlaps = 50, show.legend = FALSE) +
       scale_color_manual(values = param_colors) +
       labs(
         x = "mu*",
@@ -95,7 +102,11 @@ server <- function(input, output, session) {
         color = "Parameter Type"
       ) +
       theme_minimal(base_size = 14) +
-      theme(legend.position = "bottom")
+      theme(
+        legend.position = "bottom",
+        plot.margin = margin(5, 20, 5, 5),
+        plot.title.position = "plot"
+      )
     
     # 应用坐标缩放
     if (input$scale_mode == "log") {
@@ -107,18 +118,16 @@ server <- function(input, output, session) {
   })
   
   output$click_info <- renderPrint({
-    click <- input$plot_click
-    req(click)
+    req(input$plot_click)
     dt <- filtered_data()
-    
-    # 找到最近的点（简单欧氏距离）
-    dt[, dist := (mu_star - click$x)^2 + (sigma - click$y)^2]
-    nearest <- dt[which.min(dist)]
-    
-    cat("Parameter Name:", nearest$param_name, "\n",
-        "mu*:", signif(nearest$mu_star, 3), "\n",
-        "sigma:", signif(nearest$sigma, 3), "\n",
-        "Type:", nearest$param_type)
+    dist <- sqrt((log10(dt$mu_star) - log10(input$plot_click$x))^2 + 
+                   (log10(dt$sigma) - log10(input$plot_click$y))^2)
+    near_idx <- which.min(dist)
+    clicked <- dt[near_idx]
+    paste0("Parameter: ", clicked$param_name, 
+           "\nmu*: ", round(clicked$mu_star, 2),
+           "\nsigma: ", round(clicked$sigma, 2),
+           "\nType: ", clicked$param_type)
   })
 }
 
