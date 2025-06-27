@@ -70,11 +70,15 @@ server <- function(input, output, session) {
     EE_all[indicator == input$selected_indicator & param_type %in% input$selected_types]
   })
   
+  scale_mode <- eventReactive(input$update_btn, {
+    input$scale_mode
+  })
+  
   param_colors <- c(
     "Fisheries"   = "#E41A1C",  # 红色（Set1[1]）
     "Mortality"   = "#4DAF4A",  # 绿色（Set1[3]）
     "Growth"      = "#377EB8",  # 蓝色（Set1[2]）
-    "Prey Field"  = "#FFFF10",  # 黄色（Set1[6]）
+    "Prey Field"  = "#E6B800",  # 黄色（Set1[6]）
     "Predation"   = "#984EA3",  # 紫色（Set1[4]）
     "Other"       = "grey70"    # 灰色
   )
@@ -109,7 +113,7 @@ server <- function(input, output, session) {
       )
     
     # 应用坐标缩放
-    if (input$scale_mode == "log") {
+    if (scale_mode() == "log") {
       p <- p + scale_x_log10(labels = scales::label_number()) +
         scale_y_log10(labels = scales::label_number())
     }
