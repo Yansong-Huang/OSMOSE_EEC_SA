@@ -26,6 +26,13 @@ ui <- fluidPage(
         choices = unique(EE_biomass$param_type),
         selected = unique(EE_biomass$param_type)
       ),
+      checkboxGroupInput(
+        "log_axes", 
+        "Log-transform axes:", 
+        choices = c("mu_star", "sigma"), 
+        selected = NULL, 
+        inline = TRUE
+      ),
       actionButton("update_btn", "Confirm")
     ),
     mainPanel(
@@ -35,9 +42,16 @@ ui <- fluidPage(
 )
 
 server <- function(input, output, session) {
-  filtered_data <- eventReactive(input$update_btn, {
-    req(input$selected_types)
-    EE_biomass[param_type %in% input$selected_types]
+  selected_types <- eventReactive(input$update_btn, {
+    input$selected_types
+  })
+  
+  log_axes <- eventReactive(input$update_btn, {
+    input$log_axes
+  })
+  
+  filtered_data <- reactive({
+    EE_biomass[param_type %in% selected_types()]
   })
   
   param_colors <- c(
@@ -51,10 +65,11 @@ server <- function(input, output, session) {
   
   output$eePlot <- renderPlot({
     dt <- filtered_data()
-    ggplot(dt, aes(x = mu_star, y = sigma, color = param_type)) +
+    
+    p <- ggplot(dt, aes(x = mu_star, y = sigma, color = param_type)) +
       geom_abline(slope = c(0.1, 0.5, 1), intercept = 0, 
                   linetype = "dashed", color = "grey60", show.legend = FALSE) +
-      geom_point(size = 2, alpha = 0.8) +
+      geom_point(size = 2, alpha = 0.6) +
       scale_color_manual(values = param_colors) +
       labs(
         x = expression(mu["*"]),
@@ -63,8 +78,16 @@ server <- function(input, output, session) {
       ) +
       theme_minimal(base_size = 14) +
       theme(legend.position = "bottom")
+    
+    if ("mu_star" %in% log_axes()) {
+      p <- p + scale_x_log10(labels = scales::label_number())
+    }
+    if ("sigma" %in% log_axes()) {
+      p <- p + scale_y_log10(labels = scales::label_number())
+    }
+    
+    p
   })
-  
 }
 
 shinyApp(ui, server)
