@@ -121,13 +121,25 @@ server <- function(input, output, session) {
     p
   })
   
-  output$click_info <- renderPrint({
+  output$click_info <- renderText({
     req(input$plot_click)
     dt <- filtered_data()
-    dist <- sqrt((log10(dt$mu_star) - log10(input$plot_click$x))^2 + 
-                   (log10(dt$sigma) - log10(input$plot_click$y))^2)
+    
+    # 判断当前是否是对数坐标
+    log_mode <- scale_mode() == "log"
+    
+    # 计算距离（对数或线性）
+    dist <- if (log_mode) {
+      sqrt((log10(dt$mu_star) - log10(input$plot_click$x))^2 + 
+             (log10(dt$sigma) - log10(input$plot_click$y))^2)
+    } else {
+      sqrt((dt$mu_star - input$plot_click$x)^2 + 
+             (dt$sigma - input$plot_click$y)^2)
+    }
+    
     near_idx <- which.min(dist)
     clicked <- dt[near_idx]
+    
     paste0("Parameter: ", clicked$param_name, 
            "\nmu*: ", round(clicked$mu_star, 2),
            "\nsigma: ", round(clicked$sigma, 2),
