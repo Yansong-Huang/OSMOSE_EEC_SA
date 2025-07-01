@@ -30,6 +30,19 @@ EE_all[, param_type := fcase(
   default = "Other"
 )]
 
+# 添加物种 ID 和营养级分组（根据 param_name 中的 spX 提取）
+EE_all[, species_id := fifelse(grepl("sp\\d+", param_name),
+                               as.integer(sub(".*sp(\\d+).*", "\\1", param_name)), NA_integer_)]
+
+EE_all[, trophic_group := fcase(
+  species_id %in% c(0, 5, 15), "High",
+  species_id %in% c(3, 4, 6, 7, 8, 9), "Medium",
+  species_id %in% c(10, 11, 12), "Low",
+  species_id %in% c(13, 14), "Cephalopod",
+  is.na(species_id), "Unspecified",
+  default = "Unspecified"
+)]
+
 # ---------- UI ----------
 ui <- fluidPage(
   titlePanel("Elementary Effects on Selected Indicators"),
@@ -54,6 +67,12 @@ ui <- fluidPage(
         selected = "linear",
         inline = TRUE
       ),
+      selectInput(
+        "color_by",
+        "Color Points By:",
+        choices = c("Parameter Type" = "param_type", "Trophic Group" = "trophic_group"),
+        selected = "param_type"
+      ),
       actionButton("update_btn", "Confirm")
     ),
     mainPanel(
@@ -74,36 +93,46 @@ server <- function(input, output, session) {
     input$scale_mode
   })
   
+  color_by <- eventReactive(input$update_btn, {
+    input$color_by
+  })
+  
   param_colors <- c(
-    "Fisheries"   = "#E41A1C",  # 红色（Set1[1]）
-    "Mortality"   = "#4DAF4A",  # 绿色（Set1[3]）
-    "Growth"      = "#377EB8",  # 蓝色（Set1[2]）
-    "Prey Field"  = "#E6B800",  # 黄色（Set1[6]）
-    "Predation"   = "#984EA3",  # 紫色（Set1[4]）
-    "Other"       = "grey70"    # 灰色
+    "Fisheries"   = "#E41A1C",
+    "Mortality"   = "#4DAF4A",
+    "Growth"      = "#377EB8",
+    "Prey Field"  = "#E6B800",
+    "Predation"   = "#984EA3",
+    "Other"       = "grey70"
+  )
+  
+  trophic_colors <- c(
+    "High"        = "#E41A1C",
+    "Medium"      = "#377EB8",
+    "Low"         = "#4DAF4A",
+    "Cephalopod"  = "#984EA3",
+    "Unspecified" = "grey70"
   )
   
   output$eePlot <- renderPlot({
     dt <- filtered_data()
+    color_col <- color_by()
     
-    # 创建参考线数据（y = x）
     line_data <- data.table(mu_star = range(dt$mu_star, na.rm = TRUE))
     line_data[, sigma := mu_star]
     
-    # 获取 mu_star 前十的参数用于标签
     top_labels <- dt %>% arrange(desc(mu_star)) %>% head(10)
     
-    p <- ggplot(dt, aes(x = mu_star, y = sigma, color = param_type)) +
+    p <- ggplot(dt, aes(x = mu_star, y = sigma, color = .data[[color_col]])) +
       geom_line(data = line_data, aes(x = mu_star, y = sigma), 
                 inherit.aes = FALSE, linetype = "dashed", color = "grey60") +
       geom_point(size = 2, alpha = 0.6) +
       geom_text_repel(data = top_labels, aes(label = param_name),
                       size = 3, max.overlaps = 50, show.legend = FALSE) +
-      scale_color_manual(values = param_colors) +
       labs(
         x = "mu*",
         y = "sigma",
-        color = "Parameter Type"
+        color = if (color_col == "param_type") "Parameter Type" else "Trophic Group"
       ) +
       theme_minimal(base_size = 14) +
       theme(
@@ -112,10 +141,15 @@ server <- function(input, output, session) {
         plot.title.position = "plot"
       )
     
-    # 应用坐标缩放
     if (scale_mode() == "log") {
       p <- p + scale_x_log10(labels = scales::label_number()) +
         scale_y_log10(labels = scales::label_number())
+    }
+    
+    if (color_col == "param_type") {
+      p <- p + scale_color_manual(values = param_colors)
+    } else {
+      p <- p + scale_color_manual(values = trophic_colors)
     }
     
     p
@@ -124,11 +158,8 @@ server <- function(input, output, session) {
   output$click_info <- renderText({
     req(input$plot_click)
     dt <- filtered_data()
-    
-    # 判断当前是否是对数坐标
     log_mode <- scale_mode() == "log"
     
-    # 计算距离（对数或线性）
     dist <- if (log_mode) {
       sqrt((log10(dt$mu_star) - log10(input$plot_click$x))^2 + 
              (log10(dt$sigma) - log10(input$plot_click$y))^2)
