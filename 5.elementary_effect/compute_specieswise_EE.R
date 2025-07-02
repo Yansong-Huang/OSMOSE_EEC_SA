@@ -24,7 +24,7 @@ compute_specieswise_EE <- function(
   
   ## ------- 2. 聚合所有模拟输出 -------
   Y_mat <- t(vapply(ind_list, agg_fun_species, numeric(16)))  # n_sim × 16
-  colnames(Y_mat) <- paste0("sp", seq_len(16))  # 可换成实际物种名
+  colnames(Y_mat) <- paste0("sp", c(0:15))  # 可换成实际物种名
   
   ## ------- 3. 计算 ΔY 和 ΔX -------
   Delta <- grid_jump / (levels - 1)  # 标准化步长
@@ -41,9 +41,9 @@ compute_specieswise_EE <- function(
   
   ## ------- 4. 计算每个物种 × 每个参数的 EE -------
   EE_list_all <- vector("list", 16)
-  names(EE_list_all) <- paste0("sp", seq_len(16))
+  names(EE_list_all) <- paste0("sp", c(0:15))
   
-  for (s in seq_len(16)) {
+  for (s in seq(16)) {
     EE_list <- vector("list", n_param)
     for (p in seq_len(n_param)) {
       mask <- param_idx_mat == p
@@ -69,8 +69,8 @@ compute_specieswise_EE <- function(
   
   ## ------- 6. 输出结果 -------
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
-  fwrite(EE_stats_all, file = file.path(out_dir, paste0("EE_", out_name, "by_species_stats.csv")))
-  saveRDS(EE_list_all, file = file.path(out_dir, paste0("EE_", out_name, "by_species_raw.rds")))
+  fwrite(EE_stats_all, file = file.path(out_dir, paste0("EE_", out_name, "_by_species_stats.csv")))
+  saveRDS(EE_list_all, file = file.path(out_dir, paste0("EE_", out_name, "_by_species_raw.rds")))
   
   if (verbose) {
     message("✓ Species-wise elementary effects for ", out_name, " are saved in ", out_dir)
