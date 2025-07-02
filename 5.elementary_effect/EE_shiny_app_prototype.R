@@ -36,9 +36,10 @@ EE_all[, species_id := fifelse(grepl("sp\\d+", param_name),
 
 EE_all[, trophic_group := fcase(
   species_id %in% c(0, 5, 15), "High",
-  species_id %in% c(3, 4, 6, 7, 8, 9), "Medium",
-  species_id %in% c(10, 11, 12), "Low",
+  species_id %in% c(3, 4, 6, 7, 8, 9, 10), "Medium",
+  species_id %in% c(11, 12), "Low",
   species_id %in% c(13, 14), "Cephalopod",
+  species_id %in% c(16:26), "Resource",
   is.na(species_id), "Unspecified",
   default = "Unspecified"
 )]
@@ -111,6 +112,7 @@ server <- function(input, output, session) {
     "Medium"      = "#377EB8",
     "Low"         = "#4DAF4A",
     "Cephalopod"  = "#984EA3",
+    "Resource"    = "#E6B800",
     "Unspecified" = "grey70"
   )
   
