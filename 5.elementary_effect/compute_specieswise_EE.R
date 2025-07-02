@@ -83,6 +83,7 @@ compute_specieswise_EE <- function(
 sim_key     <- fread("4.indicators/indicators_output/simulation_key.csv")
 param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
 biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")  # 每个元素是 20×16×10 的 array
+yield_list <- readRDS("4.indicators/indicators_output/yield.rds")  # 每个元素是 20×16×10 的 array
 
 # 调用函数
 compute_specieswise_EE(
@@ -95,4 +96,12 @@ compute_specieswise_EE(
   out_dir     = "5.elementary_effect/EE_outputs"
 )
 
-
+compute_specieswise_EE(
+  ind_list    = yield_list,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  out_name    = "yield",
+  out_dir     = "5.elementary_effect/EE_outputs"
+)
