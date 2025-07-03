@@ -36,7 +36,7 @@ EE_all[, species_id := fifelse(grepl("sp\\d+", param_name),
 
 EE_all[, trophic_group := fcase(
   species_id %in% c(0, 5, 15), "High",
-  species_id %in% c(3, 4, 6, 7, 8, 9, 10), "Medium",
+  species_id %in% c(1, 2, 3, 4, 6, 7, 8, 9, 10), "Medium",
   species_id %in% c(11, 12), "Low",
   species_id %in% c(13, 14), "Cephalopod",
   species_id %in% c(16:26), "Resource",
