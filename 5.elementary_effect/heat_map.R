@@ -74,7 +74,7 @@ plot_EE_heatmap <- function(
 }
 
 # ---- EE_stats 数据 ----
-EE_stats <- fread("5.elementary_effect/biomass/EE_biomass_stats.csv")
+EE_stats <- fread("5.elementary_effect/EE_outputs/EE_biomass_by_species_stats.csv")
 # ---- EE_stats 是 data.table 且有 param_name 列 ----
 
 # 假设 EE_stats 中 param_name 是参数名称（如 predation.xx.sp0）
