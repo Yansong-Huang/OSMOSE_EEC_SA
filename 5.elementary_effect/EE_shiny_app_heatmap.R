@@ -24,46 +24,60 @@ EE_stats[, sp_order_na := NULL]
 # 按排序结果重新定义 param_name 因子顺序（纵坐标）
 EE_stats[, param_name := factor(param_name, levels = unique(param_name))]
 
-# 准备绘图数据，直接用 EE_stats 就可以了
-heat_dt <- copy(EE_stats)
-heat_dt[, value := mu_star]  # 可以改成 mu、sigma 等指标
-
-# 添加 tooltip 信息，避免 ggplotly 显示 object Object
-heat_dt[, tooltip := paste0(
-  "Species: ", species,
-  "<br>Parameter: ", param_name,
-  "<br>&mu;*: ", round(value, 2)
-)]
-
 # ---------- UI ----------
 ui <- fluidPage(
-  titlePanel("Elementary Effects Heatmap (Biomass, μ*)"),
-  fluidRow(
-    column(12,
-           plotlyOutput("heatmap", height = "1800px")
+  titlePanel("Elementary Effects Heatmap (Biomass)"),
+  sidebarLayout(
+    sidebarPanel(
+      width = 12, 
+      selectInput(
+        "value_col",
+        "Select Effect Metric:",
+        choices = c("mu_star", "mu", "sigma"),
+        selected = "mu_star"
+      )
+    ),
+    mainPanel(
+      width = 12,
+      plotlyOutput("heatmap", height = "1800px")
     )
   )
 )
 
 # ---------- Server ----------
 server <- function(input, output, session) {
-  # 自定义图例刻度断点，比如你想显示 0, 10, 100, 1000 这样几档
-  legend_breaks <- c(0, 10, 100, 1000, 10000, 100000, 500000)
-  
-  # 对应标签（如果用默认数字格式也可以不写）
-  legend_labels <- scales::label_number(accuracy = 1)(legend_breaks)
-  
   output$heatmap <- renderPlotly({
-    p <- ggplot(heat_dt, aes(x = species, y = param_name, fill = value, text = tooltip)) +
-      geom_tile(color = "white", width = 0.9, height = 0.9) +
+    heat_dt <- copy(EE_stats)
+    heat_dt[, value := get(input$value_col)]
+    
+    heat_dt[, tooltip := paste0(
+      "Species: ", species,
+      "<br>Parameter: ", param_name,
+      "<br>", input$value_col, ": ", round(value, 2)
+    )]
+    
+    # 色带设定
+    fill_scale <- if (input$value_col %in% c("mu_star", "sigma")) {
       scale_fill_viridis(
         option = "C",
         trans = "log1p",
         na.value = "grey90",
-        name = expression(mu["*"]),
-        breaks = legend_breaks,
-        labels = legend_labels,
-      )+
+        name = input$value_col,
+        labels = scales::label_number(accuracy = 1)
+      )
+    } else {
+      scale_fill_gradient2(
+        low = "blue", high = "red", mid = "white",
+        midpoint = 0,
+        na.value = "grey90",
+        name = input$value_col,
+        labels = scales::label_number(accuracy = 1)
+      )
+    }
+    
+    p <- ggplot(heat_dt, aes(x = species, y = param_name, fill = value, text = tooltip)) +
+      geom_tile(color = "white", width = 0.9, height = 0.9) +
+      fill_scale +
       theme_minimal(base_size = 12) +
       theme(
         axis.text.x = element_text(angle = 45, hjust = 1),
@@ -74,7 +88,7 @@ server <- function(input, output, session) {
       )
     
     ggplotly(p, tooltip = "text") %>%
-      layout(margin = list(l = 120, r = 20, b = 80, t = 30))
+      layout(margin = list(l = 60, r = 20, b = 80, t = 30))
   })
 }
 
