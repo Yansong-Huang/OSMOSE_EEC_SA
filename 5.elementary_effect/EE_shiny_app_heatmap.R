@@ -56,6 +56,10 @@ server <- function(input, output, session) {
       "<br>", input$value_col, ": ", round(value, 2)
     )]
     
+    # 自定义图例刻度断点（覆盖默认）
+    legend_breaks <- c(0, 10, 100, 1000, 10000, 100000, 500000)
+    legend_labels <- scales::label_number(accuracy = 1)(legend_breaks)
+    
     # 色带设定
     fill_scale <- if (input$value_col %in% c("mu_star", "sigma")) {
       scale_fill_viridis(
@@ -63,12 +67,14 @@ server <- function(input, output, session) {
         trans = "log1p",
         na.value = "grey90",
         name = input$value_col,
-        labels = scales::label_number(accuracy = 1)
+        breaks = legend_breaks,
+        labels = legend_labels
       )
     } else {
       scale_fill_gradient2(
         low = "blue", high = "red", mid = "white",
         midpoint = 0,
+        trans = "pseudo_log",
         na.value = "grey90",
         name = input$value_col,
         labels = scales::label_number(accuracy = 1)
