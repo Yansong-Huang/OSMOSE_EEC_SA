@@ -5,7 +5,7 @@ library(stringr)
 library(dendextend)
 
 # ---------- 读取数据 ----------
-EE_stats <- fread("5.elementary_effect/EE_outputs/EE_biomass_by_species_stats.csv")
+EE_stats <- fread("5.elementary_effect/EE_outputs/EE_biomass_rel_by_species_stats.csv")
 # ---------- 合并 param_type 和 param_label ----------
 mapping <- fread("5.elementary_effect/param_name_map.csv")
 EE_stats <- merge(EE_stats, mapping, by = "param_name", all.x = TRUE)
