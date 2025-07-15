@@ -6,6 +6,10 @@ library(dendextend)
 
 # ---------- 读取数据 ----------
 EE_stats <- fread("5.elementary_effect/EE_outputs/EE_biomass_by_species_stats.csv")
+# ---------- 合并 param_type 和 param_label ----------
+mapping <- fread("5.elementary_effect/param_name_map.csv")
+EE_stats <- merge(EE_stats, mapping, by = "param_name", all.x = TRUE)
+
 
 # 设定物种顺序
 species_all <- paste0("sp", 0:15)
@@ -13,9 +17,9 @@ EE_stats[, species := factor(species, levels = species_all)]
 
 
 # ---------- 构建 heatmap 数据矩阵 ----------
-heat_mat <- dcast(EE_stats, param_name ~ species, value.var = "mu_star")
+heat_mat <- dcast(EE_stats, param_label ~ species, value.var = "mu_star")
 heat_mat <- as.data.frame(heat_mat)
-rownames(heat_mat) <- heat_mat$param_name
+rownames(heat_mat) <- heat_mat$param_label
 heat_mat <- as.matrix(heat_mat[, -1])
 heat_mat_log <- log1p(heat_mat)
 
@@ -40,7 +44,7 @@ pheatmap(
   fontsize_col = 10,
   border_color = NA,
   main = "Clustered Heatmap of μ* (log1p)",
-  filename = "figures/EE_clustered_heatmap_mu_star.png",
+  filename = "figures/EE_clustered_heatmap_mu_star_test.png",
   width = 10,
   height = 12
 )
