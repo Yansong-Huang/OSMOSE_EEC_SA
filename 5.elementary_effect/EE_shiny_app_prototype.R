@@ -20,17 +20,11 @@ EE_all <- rbindlist(list(
   read_add_indicator("EE_outputs/EE_meanLength_stats.csv",         "Mean Length")
 ), use.names = TRUE, fill = TRUE)
 
-# 添加参数类型分类
-EE_all[, param_type := fcase(
-  grepl("^mortality\\.additional\\.(rate|larva\\.rate)", param_name), "Mortality",
-  grepl("^(fisheries\\.rate\\.base|species\\.catchability)", param_name), "Fisheries",
-  grepl("^(species\\.length2weight\\.condition\\.factor|species\\.k|species\\.l0|species\\.linf|species\\.maturity\\.size)", param_name), "Growth",
-  grepl("^species\\.accessibility2fish", param_name), "Prey Field",
-  grepl("^predation\\.predPrey\\.sizeRatio", param_name), "Predation",
-  default = "Other"
-)]
+# ---------- 合并 param_type 和 param_label ----------
+mapping <- fread("param_name_map.csv")
+EE_all <- merge(EE_all, mapping, by = "param_name", all.x = TRUE)
 
-# 添加物种 ID 和营养级分组（根据 param_name 中的 spX 提取）
+# ---------- 添加物种 ID 和营养级分组 ----------
 EE_all[, species_id := fifelse(grepl("sp\\d+", param_name),
                                as.integer(sub(".*sp(\\d+).*", "\\1", param_name)), NA_integer_)]
 
@@ -129,8 +123,13 @@ server <- function(input, output, session) {
       geom_line(data = line_data, aes(x = mu_star, y = sigma), 
                 inherit.aes = FALSE, linetype = "dashed", color = "grey60") +
       geom_point(size = 2, alpha = 0.6) +
-      geom_text_repel(data = top_labels, aes(label = param_name),
-                      size = 3, max.overlaps = 50, show.legend = FALSE) +
+      geom_text_repel(
+        data = top_labels,
+        aes(label = ifelse(is.na(param_label), param_name, param_label)),
+        size = 3,
+        max.overlaps = 50,
+        show.legend = FALSE
+      ) +
       labs(
         x = "mu*",
         y = "sigma",
@@ -173,7 +172,7 @@ server <- function(input, output, session) {
     near_idx <- which.min(dist)
     clicked <- dt[near_idx]
     
-    paste0("Parameter: ", clicked$param_name, 
+    paste0("Parameter: ", ifelse(is.na(clicked$param_label), clicked$param_name, clicked$param_label), 
            "\nmu*: ", round(clicked$mu_star, 2),
            "\nsigma: ", round(clicked$sigma, 2),
            "\nType: ", clicked$param_type)
