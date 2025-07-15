@@ -50,9 +50,11 @@ pheatmap(
 )
 
 # ---------- 单独保存行聚类树图（参数） ----------
-# png("figures/EE_row_dendrogram_params.png", width = 2000, height = 1000)
-# plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram")
-# dev.off()
+png("figures/EE_row_dendrogram_params.png", width = 2200, height = 4000, res = 150)
+par(mar = c(5, 5, 4, 20))  # 试着留更大的左边距
+plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram", cex = 0.7)
+dev.off()
+
 # 
 # ---------- 单独保存列聚类树图（物种） ----------
 # png("figures/EE_col_dendrogram_species.png", width = 800, height = 400)
