@@ -11,18 +11,12 @@ EE_stats <- fread("5.elementary_effect/EE_outputs/EE_biomass_by_species_stats.cs
 species_all <- paste0("sp", 0:15)
 EE_stats[, species := factor(species, levels = species_all)]
 
-# 提取参数中的物种编号作为排序依据
-EE_stats[, sp_order := str_extract(param_name, "sp\\d+")]
-EE_stats[, sp_order := as.integer(str_remove(sp_order, "sp"))]
-EE_stats[, sp_order_na := is.na(sp_order)]
-setorder(EE_stats, sp_order_na, sp_order, param_name)
-EE_stats[, sp_order_na := NULL]
-EE_stats[, param_name := factor(param_name, levels = unique(param_name))]
 
 # ---------- 构建 heatmap 数据矩阵 ----------
 heat_mat <- dcast(EE_stats, param_name ~ species, value.var = "mu_star")
+heat_mat <- as.data.frame(heat_mat)
 rownames(heat_mat) <- heat_mat$param_name
-heat_mat <- as.matrix(heat_mat[, -1, with = FALSE])
+heat_mat <- as.matrix(heat_mat[, -1])
 heat_mat_log <- log1p(heat_mat)
 
 # ---------- 聚类计算 ----------
@@ -52,11 +46,11 @@ pheatmap(
 )
 
 # ---------- 单独保存行聚类树图（参数） ----------
-png("figures/EE_row_dendrogram_params.png", width = 600, height = 1000)
-plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram")
-dev.off()
-
+# png("figures/EE_row_dendrogram_params.png", width = 2000, height = 1000)
+# plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram")
+# dev.off()
+# 
 # ---------- 单独保存列聚类树图（物种） ----------
-png("figures/EE_col_dendrogram_species.png", width = 800, height = 400)
-plot(col_dend, main = "Species Clustering Dendrogram")
-dev.off()
+# png("figures/EE_col_dendrogram_species.png", width = 800, height = 400)
+# plot(col_dend, main = "Species Clustering Dendrogram")
+# dev.off()
