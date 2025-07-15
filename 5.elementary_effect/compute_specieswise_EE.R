@@ -79,29 +79,58 @@ compute_specieswise_EE <- function(
   invisible(EE_stats_all)
 }
 
-# 准备数据
+# ==== 1. 加载必要数据 ====
 sim_key     <- fread("4.indicators/indicators_output/simulation_key.csv")
 param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
-biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")  # 每个元素是 20×16×10 的 array
-yield_list <- readRDS("4.indicators/indicators_output/yield.rds")  # 每个元素是 20×16×10 的 array
+biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
+# yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
+baseline_arr <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
 
-# 调用函数
+# ==== 2. 计算 μ*：原始生物量 ====
+# compute_specieswise_EE(
+#   ind_list    = biomass_list,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "biomass_raw",
+#   out_dir     = "5.elementary_effect/EE_outputs"
+# )
+
+# compute_specieswise_EE(
+#   ind_list    = yield_list,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "yield_raw",
+#   out_dir     = "5.elementary_effect/EE_outputs"
+# )
+
+# ==== 3. 标准化函数（可重用） ====
+standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {
+  baseline_mean <- apply(baseline_arr, 2, mean, na.rm = TRUE)
+  names(baseline_mean) <- paste0("sp", 0:15)
+  
+  if (method == "rel") {
+    lapply(ind_list, function(arr) sweep(arr, 2, baseline_mean, FUN = "/") - 1)
+  } else if (method == "logrel") {
+    lapply(ind_list, function(arr) log(sweep(arr, 2, baseline_mean, FUN = "/")))
+  } else {
+    stop("Unknown standardization method.")
+  }
+}
+
+# ==== 4. 生成相对变化率的输入 ====
+biomass_list_rel <- standardize_to_baseline(biomass_list, baseline_arr, method = "rel")
+
+# ==== 5. 计算 μ*：相对生物量变化率 ====
 compute_specieswise_EE(
-  ind_list    = biomass_list,
+  ind_list    = biomass_list_rel,
   sim_key     = sim_key,
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "biomass",
-  out_dir     = "5.elementary_effect/EE_outputs"
-)
-
-compute_specieswise_EE(
-  ind_list    = yield_list,
-  sim_key     = sim_key,
-  param_names = param_names,
-  grid_jump   = 4,
-  levels      = 8,
-  out_name    = "yield",
+  out_name    = "biomass_rel",
   out_dir     = "5.elementary_effect/EE_outputs"
 )
