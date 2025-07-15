@@ -8,11 +8,23 @@ param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
 
 # ------------ 替换映射表 ------------
 sp_names <- c(
-  "sp0"="SYC",  "sp1"="MUR",  "sp2"="BIB",  "sp3"="WHG",
-  "sp4"="POD",  "sp5"="COD",  "sp6"="LYY",  "sp7"="SOL",
-  "sp8"="PLE",  "sp9"="HOM",  "sp10"="MAC", "sp11"="HER",
-  "sp12"="PIL", "sp13"="SQZ", "sp14"="CTC", "sp15"="RJC"
+  "sp0" = "SYC",  "sp1" = "MUR",  "sp2" = "BIB",  "sp3" = "WHG",
+  "sp4" = "POD",  "sp5" = "COD",  "sp6" = "LYY",  "sp7" = "SOL",
+  "sp8" = "PLE",  "sp9" = "HOM",  "sp10" = "MAC", "sp11" = "HER",
+  "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC",
+  "sp16" = "DIA",   # Diatoms
+  "sp17" = "MPHY",  # Micro-phytoplanktons
+  "sp18" = "HF",    # Heterotrophic Flagellates
+  "sp19" = "MZP",   # Micro-zooplanktons
+  "sp20" = "MeZP",  # Meso-zooplanktons
+  "sp21" = "MaZP",  # Macro-zooplanktons
+  "sp22" = "MB",    # Meio-benthos
+  "sp23" = "DFB",   # Deposit-feeding benthos
+  "sp24" = "SFB",   # Suspension-feeding benthos
+  "sp25" = "LB",    # Large benthos
+  "sp26" = "VLB"    # Very large benthos
 )
+
 
 fleet_names <- c(
   "fsh0"="BT",  # bottom trawlers

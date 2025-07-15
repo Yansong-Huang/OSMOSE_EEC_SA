@@ -96,7 +96,7 @@ server <- function(input, output, session) {
     "Fisheries"   = "#E41A1C",
     "Mortality"   = "#4DAF4A",
     "Growth"      = "#377EB8",
-    "Prey Field"  = "#E6B800",
+    "PreyField"  = "#E6B800",
     "Predation"   = "#984EA3",
     "Other"       = "grey70"
   )
