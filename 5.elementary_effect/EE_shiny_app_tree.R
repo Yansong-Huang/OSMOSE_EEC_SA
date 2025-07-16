@@ -15,8 +15,8 @@ param_colors <- c(
 )
 
 # ---------- 读取数据 ----------
-row_hclust <- readRDS("5.elementary_effect/EE_outputs/row_hclust_wardD.rds")
-param_map <- fread("5.elementary_effect/param_name_map.csv")
+row_hclust <- readRDS("EE_outputs/row_hclust_wardD.rds")
+param_map <- fread("param_name_map.csv")
 
 # ---------- 准备 dendrogram 数据 ----------
 dend <- as.dendrogram(row_hclust)
@@ -27,23 +27,28 @@ label_df <- data.frame(label = row_hclust$labels)
 label_df <- left_join(label_df, param_map, by = c("label" = "param_label"))
 
 # 替换 label 显示为 param_label
-label_map <- setNames(label_df$param_type, row_hclust$labels)
-dend_data$labels$param_type <- label_map[dend_data$labels$label]
+dend_data$labels <- left_join(dend_data$labels, param_map, by = c("label" = "param_label"))
 
 # ---------- Shiny app ----------
 ui <- fluidPage(
   titlePanel("Parameter tree of EE on biomass by species (ward.D method)"),
-  plotOutput("dend_plot", height = "1200px")
+  radioButtons("color_by", "Color by:",
+               choices = c("param_type", "species"),
+               selected = "param_type", inline = TRUE),
+  plotOutput("dend_plot", height = "1500px")
 )
 
 server <- function(input, output, session) {
   output$dend_plot <- renderPlot({
+    # 设置颜色列（param_type 或 species）
+    dend_data$labels$color_group <- dend_data$labels[[input$color_by]]
+    
     ggplot() +
       geom_segment(data = dend_data$segments,
-                   aes(x = x, y = y, xend = xend, yend = yend)) +
+                   aes(x = y, y = x, xend = yend, yend = xend)) +
       geom_text(data = dend_data$labels,
-                aes(x = x, y = y - 0.02, label = label, color = param_type),
-                angle = 90, hjust = 1, size = 2.5) +
+                aes(x = y - 0.02, y = x, label = label, color = color_group),
+                hjust = 1, size = 2.5) +
       scale_color_manual(values = param_colors, na.value = "grey50") +
       theme_minimal() +
       theme(axis.text = element_blank(),
@@ -52,5 +57,3 @@ server <- function(input, output, session) {
       labs(title = element_blank())
   })
 }
-
-shinyApp(ui, server)
