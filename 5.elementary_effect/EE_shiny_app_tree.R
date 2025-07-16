@@ -14,6 +14,16 @@ param_colors <- c(
   "Other"       = "grey70"
 )
 
+# 为 0-15 号物种分配颜色，每个不同，其余共用一色
+species_colors <- c(
+  setNames(viridis::viridis(16), c("SYC", "MUR", "BIB", "WHG",
+                                   "POD", "COD", "LYY", "SOL",
+                                   "PLE", "HOM", "MAC", "HER",
+                                   "PIL", "SQZ", "CTC", "RJC")),
+  "resources" = "grey60",
+  "unspecified" = "grey60"
+)
+
 # ---------- 读取数据 ----------
 row_hclust <- readRDS("EE_outputs/row_hclust_wardD.rds")
 param_map <- fread("param_name_map.csv")
@@ -22,7 +32,7 @@ param_map <- fread("param_name_map.csv")
 dend <- as.dendrogram(row_hclust)
 dend_data <- dendro_data(dend, type = "rectangle")
 
-# ---------- 将参数类型合并到 label 上 ----------
+# ---------- 将参数信息合并到 label 上 ----------
 label_df <- data.frame(label = row_hclust$labels)
 label_df <- left_join(label_df, param_map, by = c("label" = "param_label"))
 
@@ -35,13 +45,19 @@ ui <- fluidPage(
   radioButtons("color_by", "Color by:",
                choices = c("param_type", "species"),
                selected = "param_type", inline = TRUE),
-  plotOutput("dend_plot", height = "1500px")
+  plotOutput("dend_plot", height = "1500px", width = "3500px")
 )
 
 server <- function(input, output, session) {
   output$dend_plot <- renderPlot({
-    # 设置颜色列（param_type 或 species）
     dend_data$labels$color_group <- dend_data$labels[[input$color_by]]
+    
+    # 设置调色板
+    color_palette <- if (input$color_by == "param_type") {
+      param_colors
+    } else {
+      species_colors
+    }
     
     ggplot() +
       geom_segment(data = dend_data$segments,
@@ -49,7 +65,7 @@ server <- function(input, output, session) {
       geom_text(data = dend_data$labels,
                 aes(x = y - 0.02, y = x, label = label, color = color_group),
                 hjust = 1, size = 2.5) +
-      scale_color_manual(values = param_colors, na.value = "grey50") +
+      scale_color_manual(values = color_palette, na.value = "grey50") +
       theme_minimal() +
       theme(axis.text = element_blank(),
             axis.title = element_blank(),
@@ -57,3 +73,5 @@ server <- function(input, output, session) {
       labs(title = element_blank())
   })
 }
+
+shinyApp(ui, server)
