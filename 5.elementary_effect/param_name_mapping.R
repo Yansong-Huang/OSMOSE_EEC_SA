@@ -1,4 +1,3 @@
-# 映射规则生成脚本
 library(data.table)
 library(stringr)
 
@@ -25,7 +24,6 @@ sp_names <- c(
   "sp26" = "VLB"    # Very large benthos
 )
 
-
 fleet_names <- c(
   "fsh0"="BT",  # bottom trawlers
   "fsh1"="MT",  # mid-water trawlers
@@ -49,7 +47,7 @@ get_param_type <- function(pn) {
 transform_param_label <- function(pn) {
   new <- pn
   
-  # 替换物种编号为简称，加上点分隔符
+  # 替换物种编号为简称
   for (s in names(sp_names)) {
     new <- str_replace_all(
       new,
@@ -58,7 +56,7 @@ transform_param_label <- function(pn) {
     )
   }
   
-  # 替换船队编号为简称，加上点分隔符
+  # 替换船队编号为简称
   for (f in names(fleet_names)) {
     new <- str_replace_all(new, paste0("(?<=\\.)", f, "(?=\\.|$)"), fleet_names[[f]])
   }
@@ -80,10 +78,24 @@ transform_param_label <- function(pn) {
   return(new)
 }
 
+# ------------ 物种提取函数 ------------
+get_species <- function(pn) {
+  sp_match <- str_extract(pn, "sp\\d+")
+  if (is.na(sp_match)) {
+    return("unspecified")
+  } else if (sp_match %in% names(sp_names)[1:16]) {
+    return(sp_names[[sp_match]])  # sp0 到 sp15
+  } else {
+    return("ressource")  # sp16 到 sp26
+  }
+}
+
 # ------------ 应用映射生成表 ------------
 mapping <- data.table(param_name = param_names)
 mapping[, param_type := get_param_type(param_name)]
 mapping[, param_label := transform_param_label(param_name)]
+mapping[, species := sapply(param_name, get_species)]
+setcolorder(mapping, c("param_name", "param_type", "species", "param_label"))
 
 # ------------ 导出 CSV ------------
 fwrite(mapping, "5.elementary_effect/param_name_map.csv")
