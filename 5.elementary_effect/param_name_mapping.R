@@ -94,8 +94,8 @@ get_species <- function(pn) {
 mapping <- data.table(param_name = param_names)
 mapping[, param_type := get_param_type(param_name)]
 mapping[, param_label := transform_param_label(param_name)]
-mapping[, species := sapply(param_name, get_species)]
-setcolorder(mapping, c("param_name", "param_type", "species", "param_label"))
+mapping[, param_species := sapply(param_name, get_species)]
+setcolorder(mapping, c("param_name", "param_type", "param_species", "param_label"))
 
 # ------------ 导出 CSV ------------
 fwrite(mapping, "5.elementary_effect/param_name_map.csv")

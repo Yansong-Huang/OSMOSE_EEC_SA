@@ -1,4 +1,4 @@
-param_name,param_type,species,param_label
+param_name,param_type,param_species,param_label
 mortality.additional.rate.sp0,Mortality,SYC,mortality.additional.rate.SYC
 mortality.additional.rate.sp1,Mortality,MUR,mortality.additional.rate.MUR
 mortality.additional.rate.sp2,Mortality,BIB,mortality.additional.rate.BIB
