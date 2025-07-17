@@ -1,3 +1,4 @@
+rm(list = ls())
 library(data.table)
 
 compute_specieswise_EE <- function(
@@ -82,9 +83,10 @@ compute_specieswise_EE <- function(
 # ==== 1. 加载必要数据 ====
 sim_key     <- fread("4.indicators/indicators_output/simulation_key.csv")
 param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
-biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
-# yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
-baseline_arr <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
+# biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
+yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
+# baseline_biomass <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
+baseline_yield <- readRDS("6.baseline/baseline_indicators_by_species/baseline_yield_sp.rds")  # 20×16×10
 
 # ==== 2. 计算 μ*：原始生物量 ====
 # compute_specieswise_EE(
@@ -122,15 +124,26 @@ standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {
 }
 
 # ==== 4. 生成相对变化率的输入 ====
-biomass_list_rel <- standardize_to_baseline(biomass_list, baseline_arr, method = "rel")
+# biomass_list_rel <- standardize_to_baseline(biomass_list, baseline_biomass, method = "rel")
+yield_list_rel <- standardize_to_baseline(yield_list, baseline_yield, method = "rel")
 
 # ==== 5. 计算 μ*：相对生物量变化率 ====
+# compute_specieswise_EE(
+#   ind_list    = biomass_list_rel,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "biomass_rel",
+#   out_dir     = "5.elementary_effect/EE_outputs"
+# )
+
 compute_specieswise_EE(
-  ind_list    = biomass_list_rel,
+  ind_list    = yield_list_rel,
   sim_key     = sim_key,
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "biomass_rel",
+  out_name    = "yield_rel",
   out_dir     = "5.elementary_effect/EE_outputs"
 )
