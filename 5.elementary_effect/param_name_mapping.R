@@ -86,7 +86,7 @@ get_species <- function(pn) {
   } else if (sp_match %in% names(sp_names)[1:16]) {
     return(sp_names[[sp_match]])  # sp0 到 sp15
   } else {
-    return("ressource")  # sp16 到 sp26
+    return("resource")  # sp16 到 sp26
   }
 }
 
