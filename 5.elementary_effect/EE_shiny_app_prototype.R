@@ -4,7 +4,7 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 library(ggrepel)
-library(RColorBrewer)
+library(viridis)
 
 # ---------- 读取并合并五类指标 ----------
 read_add_indicator <- function(path, indicator_name) {
@@ -116,11 +116,20 @@ server <- function(input, output, session) {
   )
   
   species_list <- unique(na.omit(EE_all$param_species))
+  # 指定灰色的组
+  gray_labels <- c("resource", "unspecified")
+  
+  # 将灰色组排在前面，其余组进行调色
+  non_gray_labels <- setdiff(species_list, gray_labels)
+  n_colors <- length(non_gray_labels)
+  palette_colors <- viridis(n_colors)
+  
+  # 全部标签的颜色映射（灰色 + 调色板）
   species_colors <- setNames(
-    RColorBrewer::brewer.pal(length(species_list), "Set3")[1:length(species_list)],
-    species_list
+    c(rep("#B0B0B0", length(gray_labels)), palette_colors),
+    c(gray_labels, non_gray_labels)
   )
-  species_colors[["other"]] <- "grey70"
+
   
   output$eePlot <- renderPlot({
     dt <- filtered_data()
