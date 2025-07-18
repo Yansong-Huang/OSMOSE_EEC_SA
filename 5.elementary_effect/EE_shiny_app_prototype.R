@@ -4,6 +4,7 @@ library(ggplot2)
 library(scales)
 library(dplyr)
 library(ggrepel)
+library(RColorBrewer)
 
 # ---------- 读取并合并五类指标 ----------
 read_add_indicator <- function(path, indicator_name) {
@@ -38,6 +39,8 @@ EE_all[, trophic_group := fcase(
   default = "Unspecified"
 )]
 
+EE_all[, param_species_plot := fifelse(is.na(param_species), "other", param_species)]
+
 # ---------- UI ----------
 ui <- fluidPage(
   titlePanel("Elementary Effects on Selected Indicators"),
@@ -65,7 +68,9 @@ ui <- fluidPage(
       selectInput(
         "color_by",
         "Color Points By:",
-        choices = c("Parameter Type" = "param_type", "Trophic Group" = "trophic_group"),
+        choices = c("Parameter Type" = "param_type", 
+                    "Trophic Group" = "trophic_group", 
+                    "Species" = "param_species"),
         selected = "param_type"
       ),
       actionButton("update_btn", "Confirm")
@@ -96,7 +101,7 @@ server <- function(input, output, session) {
     "Fisheries"   = "#E41A1C",
     "Mortality"   = "#4DAF4A",
     "Growth"      = "#377EB8",
-    "PreyField"  = "#E6B800",
+    "PreyField"   = "#E6B800",
     "Predation"   = "#984EA3",
     "Other"       = "grey70"
   )
@@ -110,16 +115,29 @@ server <- function(input, output, session) {
     "Unspecified" = "grey70"
   )
   
+  species_list <- unique(na.omit(EE_all$param_species))
+  species_colors <- setNames(
+    RColorBrewer::brewer.pal(length(species_list), "Set3")[1:length(species_list)],
+    species_list
+  )
+  species_colors[["other"]] <- "grey70"
+  
   output$eePlot <- renderPlot({
     dt <- filtered_data()
     color_col <- color_by()
+    
+    if (color_col == "param_species") {
+      dt[, param_species_plot := fifelse(is.na(param_species), "other", param_species)]
+    }
     
     line_data <- data.table(mu_star = range(dt$mu_star, na.rm = TRUE))
     line_data[, sigma := mu_star]
     
     top_labels <- dt %>% arrange(desc(mu_star)) %>% head(10)
     
-    p <- ggplot(dt, aes(x = mu_star, y = sigma, color = .data[[color_col]])) +
+    p <- ggplot(dt, aes(
+      x = mu_star, y = sigma, 
+      color = if (color_col == "param_species") param_species_plot else .data[[color_col]])) +
       geom_line(data = line_data, aes(x = mu_star, y = sigma), 
                 inherit.aes = FALSE, linetype = "dashed", color = "grey60") +
       geom_point(size = 2, alpha = 0.6) +
@@ -133,7 +151,10 @@ server <- function(input, output, session) {
       labs(
         x = "mu*",
         y = "sigma",
-        color = if (color_col == "param_type") "Parameter Type" else "Trophic Group"
+        color = switch(color_col,
+                       "param_type" = "Parameter Type",
+                       "trophic_group" = "Trophic Group",
+                       "param_species" = "Species")
       ) +
       theme_minimal(base_size = 14) +
       theme(
@@ -143,14 +164,16 @@ server <- function(input, output, session) {
       )
     
     if (scale_mode() == "log") {
-      p <- p + scale_x_log10(labels = scales::label_number()) +
-        scale_y_log10(labels = scales::label_number())
+      p <- p + scale_x_log10(labels = label_number()) +
+        scale_y_log10(labels = label_number())
     }
     
     if (color_col == "param_type") {
       p <- p + scale_color_manual(values = param_colors)
-    } else {
+    } else if (color_col == "trophic_group") {
       p <- p + scale_color_manual(values = trophic_colors)
+    } else if (color_col == "param_species") {
+      p <- p + scale_color_manual(values = species_colors)
     }
     
     p
