@@ -3,6 +3,7 @@ library(data.table)
 library(ggplot2)
 library(scales)
 library(dplyr)
+library(ggforce)
 library(ggrepel)
 library(viridis)
 
@@ -138,6 +139,26 @@ server <- function(input, output, session) {
     if (color_col == "param_species") {
       dt[, param_species_plot := fifelse(is.na(param_species), "other", param_species)]
     }
+
+    
+    # 假设 color_col 是分组变量（如 param_species）
+    # 提取凸包和重心
+    hull_data <- dt %>%
+      filter(!is.na(.data[[color_col]])) %>%
+      group_by(group = .data[[color_col]]) %>%
+      filter(n() >= 3) %>%  # 至少3个点才能构成凸包
+      slice(chull(mu_star, sigma)) %>%
+      ungroup()
+    
+    centroid_data <- dt %>%
+      filter(!is.na(.data[[color_col]])) %>%
+      group_by(group = .data[[color_col]]) %>%
+      summarise(
+        mu_star = mean(mu_star),
+        sigma = mean(sigma),
+        .groups = "drop"
+      )
+    
     
     line_data <- data.table(mu_star = range(dt$mu_star, na.rm = TRUE))
     line_data[, sigma := mu_star]
@@ -172,17 +193,37 @@ server <- function(input, output, session) {
         plot.title.position = "plot"
       )
     
+    
+    # 添加到现有 ggplot 中
+    
+    p <- p +
+      geom_polygon(
+        data = hull_data,
+        aes(x = mu_star, y = sigma, group = group, fill = group),
+        alpha = 0.15, color = NA, inherit.aes = FALSE, show.legend = FALSE
+      ) +
+      geom_point(
+        data = centroid_data,
+        aes(x = mu_star, y = sigma),
+        shape = 21, fill = "white", size = 2.5, stroke = 0.5, color = "black", inherit.aes = FALSE
+      ) +
+      geom_text_repel(
+        data = centroid_data,
+        aes(x = mu_star, y = sigma, label = group),
+        size = 3, inherit.aes = FALSE, max.overlaps = 50
+      )
+    
     if (scale_mode() == "log") {
       p <- p + scale_x_log10(labels = label_number()) +
         scale_y_log10(labels = label_number())
     }
     
     if (color_col == "param_type") {
-      p <- p + scale_color_manual(values = param_colors)
+      p <- p + scale_color_manual(values = param_colors) + scale_fill_manual(values = param_colors)
     } else if (color_col == "trophic_group") {
-      p <- p + scale_color_manual(values = trophic_colors)
+      p <- p + scale_color_manual(values = trophic_colors) + scale_fill_manual(values = trophic_colors)
     } else if (color_col == "param_species") {
-      p <- p + scale_color_manual(values = species_colors)
+      p <- p + scale_color_manual(values = species_colors) + scale_fill_manual(values = species_colors) 
     }
     
     p
