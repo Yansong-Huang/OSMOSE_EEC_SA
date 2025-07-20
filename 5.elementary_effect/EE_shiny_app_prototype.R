@@ -60,6 +60,13 @@ ui <- fluidPage(
         selected = unique(EE_all$param_type)
       ),
       radioButtons(
+        inputId = "show_hull",
+        label = "Show Convex Hull:",
+        choices = c("Yes", "No"),
+        selected = "No",  
+        inline = TRUE     # 使其横向排列
+      ),
+      radioButtons(
         "scale_mode", 
         "Coordinate Scale:", 
         choices = c("Linear" = "linear", "Log-Log" = "log"),
@@ -96,6 +103,10 @@ server <- function(input, output, session) {
   
   color_by <- eventReactive(input$update_btn, {
     input$color_by
+  })
+  
+  show_hull_checked <- eventReactive(input$update_btn, {
+    "Yes" %in% input$show_hull
   })
   
   param_colors <- c(
@@ -139,26 +150,6 @@ server <- function(input, output, session) {
     if (color_col == "param_species") {
       dt[, param_species_plot := fifelse(is.na(param_species), "other", param_species)]
     }
-
-    
-    # 假设 color_col 是分组变量（如 param_species）
-    # 提取凸包和重心
-    hull_data <- dt %>%
-      filter(!is.na(.data[[color_col]])) %>%
-      group_by(group = .data[[color_col]]) %>%
-      filter(n() >= 3) %>%  # 至少3个点才能构成凸包
-      slice(chull(mu_star, sigma)) %>%
-      ungroup()
-    
-    centroid_data <- dt %>%
-      filter(!is.na(.data[[color_col]])) %>%
-      group_by(group = .data[[color_col]]) %>%
-      summarise(
-        mu_star = mean(mu_star),
-        sigma = mean(sigma),
-        .groups = "drop"
-      )
-    
     
     line_data <- data.table(mu_star = range(dt$mu_star, na.rm = TRUE))
     line_data[, sigma := mu_star]
@@ -195,7 +186,25 @@ server <- function(input, output, session) {
     
     
     # 添加到现有 ggplot 中
-    
+    if (show_hull_checked()){
+      
+      # 提取凸包和重心
+      hull_data <- dt %>%
+        filter(!is.na(.data[[color_col]])) %>%
+        group_by(group = .data[[color_col]]) %>%
+        filter(n() >= 3) %>%  # 至少3个点才能构成凸包
+        slice(chull(mu_star, sigma)) %>%
+        ungroup()
+      
+      centroid_data <- dt %>%
+        filter(!is.na(.data[[color_col]])) %>%
+        group_by(group = .data[[color_col]]) %>%
+        summarise(
+          mu_star = mean(mu_star),
+          sigma = mean(sigma),
+          .groups = "drop"
+        )
+      
     p <- p +
       geom_polygon(
         data = hull_data,
@@ -212,7 +221,7 @@ server <- function(input, output, session) {
         aes(x = mu_star, y = sigma, label = group),
         size = 3, inherit.aes = FALSE, max.overlaps = 50
       )
-    
+    }
     if (scale_mode() == "log") {
       p <- p + scale_x_log10(labels = label_number()) +
         scale_y_log10(labels = label_number())
