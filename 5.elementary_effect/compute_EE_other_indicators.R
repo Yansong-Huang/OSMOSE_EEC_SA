@@ -7,9 +7,7 @@ compute_morris_EE <- function(ind_list,
                               param_names,
                               grid_jump,
                               levels,
-                              # ---- 可选参数 ----
                               agg_fun   = function(mat) mean(colMeans(mat, na.rm = TRUE), na.rm = TRUE),
-                              out_name  = "indicator",
                               out_dir   = "5.elementary_effect/EE_outputs") {
   ## ------- 0. 基本尺寸 -------
   n_step <- max(sim_key$step)
@@ -93,7 +91,7 @@ compute_morris_EE(
   # 平均营养级同样是 20×10 矩阵，聚合函数可复用默认
   out_name    = "meanTL",
   agg_fun = function(mat) {
-    mat_sub <- mat[3:20, , drop = FALSE]  # 第3行到第20行 = 后18年
+    mat_sub <- mat[3:20, , drop = FALSE]  # 只取第3年到第20年的数据
     mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
   }
 )
@@ -109,7 +107,7 @@ compute_morris_EE(
   levels      = 8,
   out_name    = "meanLength",
   agg_fun = function(mat) {
-    mat_sub <- mat[3:20, , drop = FALSE]  # 第3行到第20行 = 后18年
+    mat_sub <- mat[3:20, , drop = FALSE]  # 只取第3年到第20年的数据
     mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
   }
 )

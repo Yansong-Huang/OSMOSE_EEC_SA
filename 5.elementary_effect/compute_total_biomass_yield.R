@@ -15,7 +15,7 @@ compute_total_indicator_EE <- function(
 ) {
   if (verbose) message("✓ Starting total indicator EE computation...")
   
-  # ---------- 1. 转换每个模拟为单一指标值 ----------
+  # ---------- 1. 将每个模拟转换为单一指标值 ----------
   indicator_vec <- vapply(ind_list, agg_fun, numeric(1))  # 得到 n_sim 长向量
   sim_key_dt <- as.data.table(sim_key)
   sim_key_dt[, indicator := indicator_vec]
@@ -81,9 +81,9 @@ EE_total_biomass <- compute_total_indicator_EE(
   out_name = "biomass",
   out_dir = "5.elementary_effect/EE_outputs",
   agg_fun = function(x) {
-    # 只取最后18年数据（第3年到第20年），即 x[3:20,,]
+    # 只取第3年到第20年的数据
     x_sub <- x[3:20, , , drop = FALSE]
-    mean(colSums(x_sub))
+    mean(apply(x_sub, c(1, 3), sum))
   }
 )
 
@@ -99,8 +99,8 @@ EE_total_yield <- compute_total_indicator_EE(
   out_name = "yield",
   out_dir = "5.elementary_effect/EE_outputs",
   agg_fun = function(x) {
-    # 只取最后18年数据（第3年到第20年），即 x[3:20,,]
+    # 只取第3年到第20年的数据
     x_sub <- x[3:20, , , drop = FALSE]
-    mean(colSums(x_sub))
+    mean(apply(x_sub, c(1, 3), sum))
   }
 )

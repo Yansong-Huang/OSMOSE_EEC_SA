@@ -9,6 +9,10 @@ compute_specieswise_EE <- function(
     levels,        # Morris 方法的等级数
     out_name,    # 输出前缀
     out_dir,  # 输出目录
+    # 默认聚合函数：每个模拟输出一个 16 维向量（每个物种平均生物量） -------
+    agg_fun_species = function(arr) {
+      apply(arr, 2, function(mat) mean(mat, na.rm = TRUE))  # 20×16×10 → 每列均值
+    },
     verbose   = TRUE
 ) {
   ## ------- 0. 尺寸检查 -------
@@ -18,10 +22,7 @@ compute_specieswise_EE <- function(
   n_sim   <- length(ind_list)
   stopifnot(n_sim == n_step * n_repl)
   
-  ## ------- 1. 聚合函数：每个模拟输出一个 16 维向量（每个物种平均生物量） -------
-  agg_fun_species <- function(arr) {
-    apply(arr, 2, function(mat) mean(mat, na.rm = TRUE))  # 20×16×10 → 每列均值
-  }
+  ## ------- 
   
   ## ------- 2. 聚合所有模拟输出 -------
   Y_mat <- t(vapply(ind_list, agg_fun_species, numeric(16)))  # n_sim × 16
@@ -83,12 +84,12 @@ compute_specieswise_EE <- function(
 # ==== 1. 加载必要数据 ====
 sim_key     <- fread("4.indicators/indicators_output/simulation_key.csv")
 param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
-# biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
+biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
 yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
-# baseline_biomass <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
+baseline_biomass <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
 baseline_yield <- readRDS("6.baseline/baseline_indicators_by_species/baseline_yield_sp.rds")  # 20×16×10
 
-# ==== 2. 计算 μ*：原始生物量 ====
+# ==== 2. 计算 μ*：基于未经标准化的原始值 ====
 # compute_specieswise_EE(
 #   ind_list    = biomass_list,
 #   sim_key     = sim_key,
@@ -109,7 +110,7 @@ baseline_yield <- readRDS("6.baseline/baseline_indicators_by_species/baseline_yi
 #   out_dir     = "5.elementary_effect/EE_outputs"
 # )
 
-# ==== 3. 标准化函数（可重用） ====
+# ==== 3. 相对基线标准化函数 ====
 standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {
   baseline_mean <- apply(baseline_arr, 2, mean, na.rm = TRUE)
   names(baseline_mean) <- paste0("sp", 0:15)
@@ -124,19 +125,25 @@ standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {
 }
 
 # ==== 4. 生成相对变化率的输入 ====
-# biomass_list_rel <- standardize_to_baseline(biomass_list, baseline_biomass, method = "rel")
+biomass_list_rel <- standardize_to_baseline(biomass_list, baseline_biomass, method = "rel")
 yield_list_rel <- standardize_to_baseline(yield_list, baseline_yield, method = "rel")
 
-# ==== 5. 计算 μ*：相对生物量变化率 ====
-# compute_specieswise_EE(
-#   ind_list    = biomass_list_rel,
-#   sim_key     = sim_key,
-#   param_names = param_names,
-#   grid_jump   = 4,
-#   levels      = 8,
-#   out_name    = "biomass_rel",
-#   out_dir     = "5.elementary_effect/EE_outputs"
-# )
+# ==== 5. 计算 μ*：基于经过标准化的指标 ====
+compute_specieswise_EE(
+  ind_list    = biomass_list_rel,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  out_name    = "biomass_rel",
+  out_dir     = "5.elementary_effect/EE_outputs",
+  agg_fun_species <- function(arr) {
+    apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+  }
+)
+
+## 释放大对象
+rm(biomass_list)
 
 compute_specieswise_EE(
   ind_list    = yield_list_rel,
@@ -145,5 +152,8 @@ compute_specieswise_EE(
   grid_jump   = 4,
   levels      = 8,
   out_name    = "yield_rel",
-  out_dir     = "5.elementary_effect/EE_outputs"
+  out_dir     = "5.elementary_effect/EE_outputs",
+  agg_fun_species <- function(arr) {
+    apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+  }
 )
