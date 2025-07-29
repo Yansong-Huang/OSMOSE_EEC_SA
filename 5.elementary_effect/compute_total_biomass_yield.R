@@ -1,4 +1,4 @@
-library(data.table)
+rm(list = ls())
 
 library(data.table)
 
@@ -69,7 +69,7 @@ compute_total_indicator_EE <- function(
 # 准备数据
 sim_key     <- fread("4.indicators/indicators_output/simulation_key.csv")
 param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
-biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")  # 每个元素是 20×16×10 的 array
+biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")  # 每个元素的维度为20年×16物种×10模拟重复
 
 # 调用函数
 EE_total_biomass <- compute_total_indicator_EE(
@@ -79,7 +79,12 @@ EE_total_biomass <- compute_total_indicator_EE(
   grid_jump = 4,
   levels = 8,
   out_name = "biomass",
-  out_dir = "5.elementary_effect/EE_outputs"
+  out_dir = "5.elementary_effect/EE_outputs",
+  agg_fun = function(x) {
+    # 只取最后18年数据（第3年到第20年），即 x[3:20,,]
+    x_sub <- x[3:20, , , drop = FALSE]
+    mean(colSums(x_sub))
+  }
 )
 
 yield_list <- readRDS("4.indicators/indicators_output/yield.rds")  # 每个元素是 20×16×10 的 array
@@ -92,5 +97,10 @@ EE_total_yield <- compute_total_indicator_EE(
   grid_jump = 4,
   levels = 8,
   out_name = "yield",
-  out_dir = "5.elementary_effect/EE_outputs"
+  out_dir = "5.elementary_effect/EE_outputs",
+  agg_fun = function(x) {
+    # 只取最后18年数据（第3年到第20年），即 x[3:20,,]
+    x_sub <- x[3:20, , , drop = FALSE]
+    mean(colSums(x_sub))
+  }
 )

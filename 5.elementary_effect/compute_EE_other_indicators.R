@@ -1,3 +1,4 @@
+rm(list = ls())
 # ---------------------------------------------------------------
 #  函数: compute_morris_EE
 # ---------------------------------------------------------------
@@ -73,7 +74,11 @@ compute_morris_EE(
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "LFI40"
+  out_name    = "LFI40",
+  agg_fun = function(mat) {
+    mat_sub <- mat[3:20, , drop = FALSE]  # 第3行到第20行 = 后18年
+    mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
+  }
 )
 
 # 3) 计算平均营养级 (meanTL)
@@ -86,7 +91,11 @@ compute_morris_EE(
   grid_jump   = 4,
   levels      = 8,
   # 平均营养级同样是 20×10 矩阵，聚合函数可复用默认
-  out_name    = "meanTL"
+  out_name    = "meanTL",
+  agg_fun = function(mat) {
+    mat_sub <- mat[3:20, , drop = FALSE]  # 第3行到第20行 = 后18年
+    mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
+  }
 )
 
 # 4) 计算平均体长
@@ -98,5 +107,9 @@ compute_morris_EE(
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "meanLength"
+  out_name    = "meanLength",
+  agg_fun = function(mat) {
+    mat_sub <- mat[3:20, , drop = FALSE]  # 第3行到第20行 = 后18年
+    mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
+  }
 )
