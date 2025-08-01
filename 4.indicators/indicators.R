@@ -103,3 +103,68 @@
   
   return(lfi)
 }
+
+.LFI_by_species <- function(biomass, sizeSpectrumB, thr) {
+  
+  sizes <- as.numeric(colnames(sizeSpectrumB[[1]]))
+  marks <- sizes + 0.5 * mean(diff(sizes))
+  
+  # 统一 colnames
+  for (i in seq_along(sizeSpectrumB)) {
+    colnames(sizeSpectrumB[[i]]) <- marks
+  }
+  
+  n_species <- dim(biomass)[2]   # 第二维是物种
+  time_steps <- dim(biomass)[1]
+  replicates <- dim(biomass)[3]
+  
+  # 初始化结果数组：物种 × 时间 × 重复
+  result <- array(NA, dim = c(n_species, time_steps, replicates))
+  
+  for (sp in seq_len(n_species)) {
+    bio <- biomass[, sp, ]  # time x replicate 矩阵
+    sizeB <- sizeSpectrumB[[sp]]  # time x size x replicate
+    
+    # 非捕捞物种过滤
+    if (all(is.na(bio)) || sum(bio, na.rm = TRUE) == 0) {
+      next
+    }
+    
+    # 体长超过阈值部分的捕捞量求和
+    large_bio <- sizeB[, marks > thr, , drop = FALSE]  # time x size_filtered x replicate
+    large_bio_sum <- apply(large_bio, c(1, 3), sum, na.rm = TRUE)  # time x replicate
+    
+    # 总捕捞量，直接用 bio，因为已经是 time x replicate
+    total_bio <- bio  # time x replicate
+    
+    # 计算比例，注意除数为0时处理
+    ratio <- large_bio_sum / total_bio
+    ratio[is.nan(ratio)] <- NA
+    
+    result[sp, , ] <- ratio
+  }
+  
+  dimnames(result) <- list(
+    species = dimnames(biomass)[[2]],
+    time = dimnames(biomass)[[1]],
+    replicate = dimnames(biomass)[[3]]
+  )
+  
+  return(result)
+}
+
+.YieldBySize_to_df <- function(yield_by_size) {
+  out <- list()
+  for (sp in seq_along(yield_by_size)) {
+    arr <- yield_by_size[[sp]]  # 20 × 26 × 10 array
+    dimnames(arr) <- list(
+      year = 1:dim(arr)[1],
+      length = 1:dim(arr)[2],
+      rep = 1:dim(arr)[3]
+    )
+    df <- as.data.frame.table(arr, responseName = "yield")
+    df$species <- sp
+    out[[sp]] <- df
+  }
+  do.call(rbind, out)
+}

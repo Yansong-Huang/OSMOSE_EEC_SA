@@ -4,6 +4,9 @@
 libs <- c("data.table", "stringr")
 invisible(lapply(libs, require, character.only = TRUE))
 
+## 指标计算函数在 indicators.R
+source("4.indicators/indicators.R")
+
 ## ------------------------------------------------------------------
 ##  1. 路径 & 数据  ----
 ## ------------------------------------------------------------------
@@ -80,8 +83,6 @@ simulation_key <- data.table(
   sim_file          = simu_files                           # 文件名对应196000条
 )
 
-## 指标计算函数在 indicators.R
-source("4.indicators/indicators.R")
 
 for (i in seq_len(n_sim)) {
   object <- readRDS(simu_files[i])
