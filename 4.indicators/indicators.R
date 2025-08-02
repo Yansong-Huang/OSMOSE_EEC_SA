@@ -118,11 +118,12 @@
   time_steps <- dim(biomass)[1]
   replicates <- dim(biomass)[3]
   
-  # 初始化结果数组：物种 × 时间 × 重复
-  result <- array(NA, dim = c(n_species, time_steps, replicates))
+  # 初始化结果数组：时间 × 物种 × 重复
+  # TODO 物种和时间维度顺序调换
+  result <- array(NA, dim = c( time_steps, n_species, replicates))
   
   for (sp in seq_len(n_species)) {
-    bio <- biomass[, sp, ]  # time x replicate 矩阵
+    bio <- biomass[sp, , ]  # time x replicate 矩阵
     sizeB <- sizeSpectrumB[[sp]]  # time x size x replicate
     
     # 非捕捞物种过滤
