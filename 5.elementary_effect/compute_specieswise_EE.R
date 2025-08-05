@@ -118,7 +118,7 @@ compute_specieswise_EE(
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "LFI_sp_raw",
+  out_name    = "LFI",
   out_dir     = "5.elementary_effect/EE_outputs"
 )
 
