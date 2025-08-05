@@ -32,13 +32,13 @@ plot_heatmap_by_species <- function(data,
   
   # 创建绘图对象
   p <- ggplot(data, aes_string(x = species_col, y = param_col, fill = value_col)) +
-    geom_tile(color = "white", size = 0.3) +
-    scale_fill_viridis(
-      option = "C",
-      direction = 1,
-      trans = scale_trans,
-      name = fill_label %||% value_col
-    ) +
+    geom_tile(color = "NA", size = 0.3) +
+    # scale_fill_viridis(
+    #   option = "C",
+    #   direction = 1,
+    #   trans = scale_trans,
+    #   name = fill_label %||% value_col
+    # ) +
     labs(
       title = plot_title %||% paste("Heatmap of", value_col),
       x = "Species",
@@ -50,6 +50,22 @@ plot_heatmap_by_species <- function(data,
       axis.text.y = element_text(size = 10),
       plot.title = element_text(hjust = 0.5, face = "bold")
     )
+  
+  if (value_col == "mu") {
+    fill_scale <- scale_fill_gradient2(
+      low = "#482777", mid = "white", high = "#FDE725",
+      midpoint = 0,
+      name = fill_label %||% value_col
+    )
+  } else {
+    fill_scale <- scale_fill_viridis(
+      option = "C",
+      direction = 1,
+      trans = scale_trans,
+      name = fill_label %||% value_col
+    )
+  }
+  p <- p + fill_scale
   
   return(p)
 }
@@ -77,7 +93,8 @@ mapping <- fread("5.elementary_effect/param_name_map.csv")
 EE_stats <- merge(EE_stats, mapping, by = "param_name", all.x = TRUE)
 
 # ---------- 筛选：仅相关参数 ----------
-EE_stats <- filter(EE_stats, str_detect(param_species, "SYC"))
+sel_param_sp <- "HER"
+EE_stats <- filter(EE_stats, str_detect(param_species, sel_param_sp))
 
 # 指标列名称，mu mu_star sigma
 metric_col <- "sigma"
@@ -100,7 +117,7 @@ plot_heatmap_by_species(
   species_order = species_all,
   scale_trans = "log1p",
   fill_label = paste(metric_col, "(log1p)"),
-  plot_title = paste("EE of lesser-spotted dogfish parameters on LFI:", metric_col)
+  plot_title = paste("EE of", sel_param_sp, "parameters on LFI:", metric_col)
 )
 
   
