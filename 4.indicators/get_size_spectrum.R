@@ -1,9 +1,9 @@
 # 为什么鲱鱼参数扰动导致大鱼指数发生了明显变化？
-
+rm(list = ls())
 ## ------------------------------------------------------------------
 ##  0. 依赖包  ----
 ## ------------------------------------------------------------------
-libs <- c("data.table", "stringr")
+libs <- c("data.table", "stringr", "qs")
 invisible(lapply(libs, require, character.only = TRUE))
 
 ## 指标计算函数在 indicators.R
@@ -57,6 +57,5 @@ for (i in seq_len(n_sim)) {
 ## ------------------------------------------------------------------
 ##  6. 保存所有指标  ----
 ## ------------------------------------------------------------------
-saveRDS(out_LFI_sp, file = file.path(output_dir, "lfi_sp.rds"))
 
-
+qsave(out_LFI_sp, file = file.path(output_dir, "lfi_sp.qs"))

@@ -114,16 +114,15 @@
     colnames(sizeSpectrumB[[i]]) <- marks
   }
   
-  n_species <- dim(biomass)[2]   # 第二维是物种
   time_steps <- dim(biomass)[1]
+  n_species <- dim(biomass)[2]   # 第二维是物种
   replicates <- dim(biomass)[3]
   
   # 初始化结果数组：时间 × 物种 × 重复
-  # TODO 物种和时间维度顺序调换
   result <- array(NA, dim = c( time_steps, n_species, replicates))
   
   for (sp in seq_len(n_species)) {
-    bio <- biomass[sp, , ]  # time x replicate 矩阵
+    bio <- biomass[ ,sp , ]  # time x replicate 矩阵
     sizeB <- sizeSpectrumB[[sp]]  # time x size x replicate
     
     # 非捕捞物种过滤
@@ -142,12 +141,12 @@
     ratio <- large_bio_sum / total_bio
     ratio[is.nan(ratio)] <- NA
     
-    result[sp, , ] <- ratio
+    result[,sp , ] <- ratio
   }
   
   dimnames(result) <- list(
-    species = dimnames(biomass)[[2]],
     time = dimnames(biomass)[[1]],
+    species = dimnames(biomass)[[2]],
     replicate = dimnames(biomass)[[3]]
   )
   
