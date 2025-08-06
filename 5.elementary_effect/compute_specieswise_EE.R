@@ -89,8 +89,9 @@ param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
 # yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
 # baseline_biomass <- readRDS("6.baseline/baseline_indicators_by_species/baseline_biomass_sp.rds")  # 20×16×10
 # baseline_yield <- readRDS("6.baseline/baseline_indicators_by_species/baseline_yield_sp.rds")  # 20×16×10
-LFI_list <- readRDS("4.indicators/indicators_output/lfi_sp.rds")
-
+# LFI_list <- readRDS("4.indicators/indicators_output/lfi_sp.rds")
+mean_TL_list <- readRDS("4.indicators/indicators_output/meanTL_by_sp.rds")
+mean_length_list <- readRDS("4.indicators/indicators_output/meanLength_by_sp.rds")
 # ==== 2. 计算 μ*：基于未经标准化的原始值 ====
 # compute_specieswise_EE(
 #   ind_list    = biomass_list,
@@ -113,16 +114,24 @@ LFI_list <- readRDS("4.indicators/indicators_output/lfi_sp.rds")
 # )
 
 compute_specieswise_EE(
-  ind_list    = LFI_list,
+  ind_list    = mean_TL_list,
   sim_key     = sim_key,
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "LFI",
+  out_name    = "mean_TL",
   out_dir     = "5.elementary_effect/EE_outputs"
 )
 
-
+compute_specieswise_EE(
+  ind_list    = mean_length_list,
+  sim_key     = sim_key,
+  param_names = param_names,
+  grid_jump   = 4,
+  levels      = 8,
+  out_name    = "mean_length",
+  out_dir     = "5.elementary_effect/EE_outputs"
+)
 
 # ==== 3. 相对基线标准化函数 ====
 # standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {

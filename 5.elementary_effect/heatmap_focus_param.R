@@ -82,7 +82,7 @@ sp_names <- c(
 species_all <- paste0("sp", 0:15)
 
 # ---------- 读取数据 ---------- 
-plot_indicator <- "biomass_rel"
+plot_indicator <- "mean_TL"
 EE_stats <- fread(paste0("5.elementary_effect/EE_outputs/EE_",plot_indicator,"_by_species_stats.csv"))
 
 # 去掉非捕捞物种
@@ -94,11 +94,11 @@ mapping <- fread("5.elementary_effect/param_name_map.csv")
 EE_stats <- merge(EE_stats, mapping, by = "param_name", all.x = TRUE)
 
 # ---------- 筛选：仅相关参数 ----------
-sel_param_sp <- "HER"
+sel_param_sp <- "SYC"
 EE_stats <- filter(EE_stats, str_detect(param_species, sel_param_sp))
 
 # 指标列名称，mu mu_star sigma
-metric_col <- "mu"
+metric_col <- "sigma"
 
 # 只保留想要画的指标列，比如 mu_star、sigma 等
 heat_data <- melt(
@@ -119,7 +119,7 @@ plot_heatmap_by_species(
   species_order = species_all,
   scale_trans = colour_scale_trans, 
   fill_label = paste(metric_col),
-  plot_title = paste("EE",metric_col,"of", sel_param_sp, "parameters on", plot_indicator,"; colour scale", colour_scale_trans)
+  plot_title = paste("EE",metric_col,"of", sel_param_sp, "parameters on", plot_indicator)
 )
 
   
