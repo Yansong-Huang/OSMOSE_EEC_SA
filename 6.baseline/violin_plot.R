@@ -37,80 +37,55 @@ baseline_dt <- data.table(
   scenario = "baseline"
 )
 
+
+# 计算每年的平均 biomass（不包括 baseline）
+mean_dt <- biomass_all[,.(mean_biomass = mean(biomass)),
+                     by = year]
+
+# 平均值差异
+mean_dt$mean_biomass - baseline_dt$biomass
+# [1] -496115.03 -628063.79 -268535.80 -163020.84 -134879.33
+# [6] -173908.25 -105861.99 -122698.12 -174418.31 -233002.43
+# [11] -203859.85 -171334.12 -176435.78 -123327.97 -130574.62
+# [16] -128972.61 -115368.62  -93810.88  -97415.27 -108765.56
+
 # combine data
 plot_data <- rbind(biomass_all, baseline_dt, fill = TRUE)
 
+# 准备图例
+baseline_dt[, type := "baseline average"]
+mean_dt[, type := "test average"]
+
+baseline_dt[, year := as.integer(year)]
+mean_dt[, year := as.integer(year)]
+
+# 统一列名以便合并
+setnames(baseline_dt, "biomass", "value")
+setnames(mean_dt, "mean_biomass", "value")
+
+# 合并两条线的数据
+line_dt <- rbind(baseline_dt[, .(year, value, type)],
+                 mean_dt[, .(year, value, type)])
 
 violin_plot <- ggplot(plot_data[scenario != "baseline"], aes(x = factor(year), y = biomass)) +
   geom_violin(fill = "skyblue", alpha = 0.5, draw_quantiles = 0.5) +
-  geom_line(data = plot_data[scenario == "baseline"],
-            aes(x = factor(year), y = biomass, group = 1),
-            color = "darkred", size = 1.2) +
+  
+  # 添加两条线（自动带图例）
+  geom_line(data = line_dt,
+            aes(x = factor(year), y = value, color = type, linetype = type, group = type),
+            size = 1.1) +
+  
+  scale_color_manual(values = c("baseline average" = "darkred",
+                                "test average" = "blue")) +
+  scale_linetype_manual(values = c("baseline average" = "solid",
+                                   "test average" = "dashed")) +
+  
   labs(x = "Year", y = "Total Biomass (t)",
-       title = "Morris simulation: total biomass over time") +
-  theme_minimal(base_size = 14)+
+       title = "Morris simulation: total biomass over time",
+       color = "Scenario", linetype = "Scenario") +
+  
+  theme_minimal(base_size = 14) +
   theme(plot.background = element_rect(fill = "white", color = NA))
-                
 
 ggsave("figures/violin_total_biomass_over_time.png", plot = violin_plot, width = 12, height = 5, dpi = 300)
 
-#------ 2 violin plot by species-----
-
-# ----------------- 准备实验模拟数据 -----------------
-# 每个元素：20年 × 16物种 × 10重复 → reshape成长格式
-biomass_species_list <- lapply(seq_along(biomass_list), function(i) {
-  x <- biomass_list[[i]]  # 20 × 16 × 10
-  
-  dt <- as.data.table(as.table(x))  # 三维转长格式
-  setnames(dt, c("year", "species", "replicate", "biomass"))
-  
-  dt[, `:=`(
-    year = as.integer(year),
-    species = paste0("sp", as.integer(species)),
-    replicate = as.integer(replicate),
-    scenario = paste0("exp", i)
-  )]
-  
-  return(dt)
-})
-
-biomass_species_all <- rbindlist(biomass_species_list)
-
-# ----------------- 准备基线数据 -----------------
-# baseline_biomass <- readRDS("6.baseline/mean_baseline/baseline_biomass_sp.rds")
-
-
-# 转为 data.table 再 melt，确保兼容性和未来稳定性
-baseline_dt <- melt(
-  as.data.table(baseline_biomass),
-  measure.vars = names(baseline_biomass),
-  variable.name = "species",
-  value.name = "biomass"
-)
-
-# 添加年份（1到20）与标签
-baseline_dt[, `:=`(
-  year = 1:.N,
-  species = as.character(species),
-  scenario = "baseline"
-)]
-
-
-
-# ----------------- 合并数据 -----------------
-plot_species_dt <- rbind(biomass_species_all, baseline_dt, fill = TRUE)
-
-# 示例：只保留重复 == 1 的数据
-plot_species_small <- plot_species_dt[replicate == 1]
-
-
-violin_by_species <- ggplot(plot_species_small[scenario != "baseline"], aes(x = factor(year), y = biomass)) +
-  geom_violin(fill = "skyblue", alpha = 0.4, draw_quantiles = 0.5) +
-  geom_line(data = plot_species_small[scenario == "baseline"],
-            aes(x = factor(year), y = biomass, group = 1),
-            color = "red", size = 0.8) +
-  facet_wrap(~species, scales = "free_y") +
-  labs(x = "Year", y = "Biomass (t)", title = "Morris simulation: Species-wise biomass over time") +
-  theme_minimal(base_size = 12)
-
-ggsave("figures/violin_total_biomass_by_species_over_time.png", plot = violin_by_species, width = 20, height = 10, dpi = 300)
