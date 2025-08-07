@@ -98,8 +98,8 @@ compute_specieswise_EE(
   out_name    = "LFI",
   out_dir     = "5.elementary_effect/EE_outputs",
   agg_fun_species <- function(arr) {
-    apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
-  }
+    apply(arr[,3:20 , ], 1, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+  } # TODO 此处的维度顺序和其他指标不同。在上一环节的脚本中已经修正。未来决定是否需要重新跑。
 )
 ## 释放大对象
 rm(LFI_list)
