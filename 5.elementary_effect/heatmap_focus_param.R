@@ -32,13 +32,7 @@ plot_heatmap_by_species <- function(data,
   
   # 创建绘图对象
   p <- ggplot(data, aes_string(x = species_col, y = param_col, fill = value_col)) +
-    geom_tile(color = "NA", size = 0.3) +
-    # scale_fill_viridis(
-    #   option = "C",
-    #   direction = 1,
-    #   trans = scale_trans,
-    #   name = fill_label %||% value_col
-    # ) +
+    geom_tile(color = NA) +
     labs(
       title = plot_title %||% paste("Heatmap of", value_col),
       x = "Species",
@@ -48,7 +42,8 @@ plot_heatmap_by_species <- function(data,
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
       axis.text.y = element_text(size = 10),
-      plot.title = element_text(hjust = 0.5, face = "bold")
+      plot.title = element_text(hjust = 0.5, face = "bold"),
+      plot.background = element_rect(fill = "white", color = NA)
     )
   
   if (value_col == "mu") {
@@ -67,6 +62,13 @@ plot_heatmap_by_species <- function(data,
   }
   p <- p + fill_scale
   
+  filename <- paste0(
+    "figures/",
+    paste0("test_EE_", value_col, "_",species_col,"_parameters_on", gsub(" ", "_", plot_title)),
+    ".pdf"
+  )
+  ggsave(filename, p, width = 8, height = 5, dpi = 300)
+
   return(p)
 }
 
@@ -82,7 +84,7 @@ sp_names <- c(
 species_all <- paste0("sp", 0:15)
 
 # ---------- 读取数据 ---------- 
-plot_indicator <- "mean_TL"
+plot_indicator <- "LFI"
 EE_stats <- fread(paste0("5.elementary_effect/EE_outputs/EE_",plot_indicator,"_by_species_stats.csv"))
 
 # 去掉非捕捞物种
@@ -122,4 +124,4 @@ plot_heatmap_by_species(
   plot_title = paste("EE",metric_col,"of", sel_param_sp, "parameters on", plot_indicator)
 )
 
-  
+
