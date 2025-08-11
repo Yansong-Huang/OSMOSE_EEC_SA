@@ -30,8 +30,8 @@ cod_values <- unlist(lapply(biomass_list, function(arr) {
 }))
 
 summary(cod_values)
-hist(cod_values, breaks = 100, main = "大西洋鳕生物量分布", 
-     xlab = "生物量", col = "skyblue", border = "white")
+hist(cod_values, breaks = 100, main = "biomass distribution of cuttlefish", 
+     xlab = "biomass (t)", col = "skyblue", border = "white")
 
 # 最后一年所有物种生物量在不同实验中的分布情况
 par(mfrow = c(4, 4), mar = c(3, 3, 2, 1))
@@ -40,3 +40,14 @@ for (i in 1:16) {
   hist(values, main = paste0("sp", i - 1), xlab = "", ylab = "", col = "gray", border = "white")
 }
 
+# ------ 为什么墨鱼常常灭绝？------
+
+# 提取所有模拟中 sp14 的值
+# 维度：20 × 10，共196000个模拟
+ctc_values <- unlist(lapply(biomass_list, function(arr) {
+  arr[, 15, ]  # 15是sp14在R中的索引
+}))
+
+summary(ctc_values)
+hist(ctc_values, breaks = 100, main = "biomass distribution of cuttlefish", 
+     xlab = "biomass (t)", col = "skyblue", border = "white")
