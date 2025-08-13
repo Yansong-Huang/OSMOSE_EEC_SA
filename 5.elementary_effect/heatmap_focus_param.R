@@ -79,6 +79,7 @@ plot_heatmap_by_species <- function(data,
 }
 
 # ---------- 循环参数 ----------
+# TODO 将指标和过滤物种关联（部分指标需要过滤非捕捞物种）
 indicators <- c("biomass_rel", "mean_length", "mean_TL") # indicators including poor cod and dragonet
 # "LFI", "yield_rel" # indicators without poor cod and dragonet
 metrics <- c("mu", "mu_star", "sigma")
