@@ -22,15 +22,15 @@ all_top <- lapply(indicators, function(ind) {
 })
 
 names(all_top) <- indicators
-library(dplyr)
-library(stringr)
 
-summary_tables <- lapply(all_top, function(df) {
+# 生成两个结果：分类表和汇总表
+results <- lapply(all_top, function(df) {
   
-  # 先提取物种列
+  # 提取物种列
   sp_cols <- grep("^sp[0-9]+", colnames(df), value = TRUE)
   
-  df <- df %>%
+  # 先生成 param_classes
+  param_classes_df <- df %>%
     rowwise() %>%
     mutate(
       main_sp = str_extract(param_name, "sp[0-9]+"),
@@ -44,18 +44,30 @@ summary_tables <- lapply(all_top, function(df) {
       )
     ) %>%
     ungroup() %>%
+    select(param_name, affected_sp, class)  # main_sp 不需要就不保留
+  
+  # 再生成 summary_table
+  summary_df <- param_classes_df %>%
     group_by(class) %>%
     summarise(
       n = n(),
-      prop = n / nrow(df)
+      prop = n / nrow(param_classes_df),
+      .groups = "drop"
     ) %>%
     arrange(class)
   
-  return(df)
+  return(list(
+    param_classes = param_classes_df,
+    summary_table = summary_df
+  ))
 })
+
+# 分别提取
+param_classes <- lapply(results, `[[`, "param_classes")
+summary_tables <- lapply(results, `[[`, "summary_table")
 
 
 # 查看某个指标
-summary_tables$biomass_rel
+# summary_tables$biomass_rel
 
 
