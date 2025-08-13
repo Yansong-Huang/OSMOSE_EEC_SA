@@ -47,13 +47,13 @@ for (ind in indicators) {
   ]
   
   
-  # 2e) 找出前5%参数-物种组合
-  threshold <- quantile(mu_star_mat, probs = 0.95, na.rm = TRUE)
+  # 2e) 找出前10%参数-物种组合
+  threshold <- quantile(mu_star_mat, probs = 0.9, na.rm = TRUE)
   top5_mat <- (mu_star_mat >= threshold) * 1  # 0/1 矩阵
   
   # 2f) 保存结果
   write_csv(as.data.frame(top5_mat) %>% mutate(param_name = rownames(top5_mat)) %>% relocate(param_name),
-            paste0("5.elementary_effect/EE_pattern/top5pct_", ind, ".csv"))
+            paste0("5.elementary_effect/EE_pattern/top10pct_", ind, ".csv"))
   
-  message("指标 ", ind, " 处理完成，前5% 参数-物种组合已保存")
+  message("指标 ", ind, " 处理完成，前10% 参数-物种组合已保存")
 }

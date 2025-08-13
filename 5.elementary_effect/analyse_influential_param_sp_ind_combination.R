@@ -11,11 +11,11 @@ library(readr)
 indicators <- c("biomass_rel", "mean_length", "LFI", "yield_rel", "mean_TL")
 
 #-----------------------------
-# 2) 读取各指标 top5% 矩阵并合并
+# 2) 读取各指标矩阵并合并
 #    假设 CSV 文件结构：行=参数, 列=物种-指标组合, 值=0/1
 #-----------------------------
 all_top <- lapply(indicators, function(ind) {
-  df <- read_csv(paste0("5.elementary_effect/EE_pattern/top5pct_", ind, ".csv"),
+  df <- read_csv(paste0("5.elementary_effect/EE_pattern/top10pct_", ind, ".csv"),
                  show_col_types = FALSE)
 
   return(df)
@@ -44,7 +44,7 @@ results <- lapply(all_top, function(df) {
       )
     ) %>%
     ungroup() %>%
-    select(param_name, affected_sp, class)  # main_sp 不需要就不保留
+    select(param_name, main_sp, affected_sp, class)  # main_sp 不需要就不保留
   
   # 再生成 summary_table
   summary_df <- param_classes_df %>%
@@ -66,8 +66,16 @@ results <- lapply(all_top, function(df) {
 param_classes <- lapply(results, `[[`, "param_classes")
 summary_tables <- lapply(results, `[[`, "summary_table")
 
-
-# 查看某个指标
-# summary_tables$biomass_rel
+species_summary_list <- lapply(param_classes, function(df) {
+  df %>%
+    group_by(main_sp, class) %>%
+    summarise(n = n(), .groups = "drop_last") %>%
+    mutate(prop = n / sum(n)) %>%
+    summarise(
+      dominant_class = if (max(prop) >= 0.5) class[which.max(prop)] else NA,
+      dominant_prop  = max(prop),
+      .groups = "drop"
+    )
+})
 
 
