@@ -7,6 +7,15 @@ library(stringr)
 library(dendextend)
 library(dplyr)
 
+# ----------准备----------
+#物种映射
+sp_names <- c(
+  "sp0" = "SYC",  "sp1" = "MUR",  "sp2" = "BIB",  "sp3" = "WHG",
+  "sp4" = "POD",  "sp5" = "COD",  "sp6" = "LYY",  "sp7" = "SOL",
+  "sp8" = "PLE",  "sp9" = "HOM",  "sp10" = "MAC", "sp11" = "HER",
+  "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC"
+)
+# 指标
 indicators <- c("biomass_rel", "mean_length", "LFI", "yield_rel", "mean_TL")
 
 for(ind in indicators)
@@ -33,6 +42,10 @@ for(ind in indicators)
   heat_mat <- as.data.frame(heat_mat)
   rownames(heat_mat) <- heat_mat$param_label
   heat_mat <- as.matrix(heat_mat[, -1])
+  
+  # 替换列名为物种缩写
+  colnames(heat_mat) <- sp_names[colnames(heat_mat)]
+  
   heat_mat_log <- log1p(heat_mat)
   
   # ---------- 聚类计算 ----------
@@ -55,14 +68,15 @@ for(ind in indicators)
     fontsize_row = 6,          # 显示参数名
     fontsize_col = 10,
     border_color = NA,
+    angle_col = 45,   # 横坐标文字旋转 45 度
     main = "Clustered Heatmap of μ* (log1p)",
-    filename = paste0("figures/hierarchical_heatmap/EE_",ind,"_clustered_heatmap_mu_star_standardised_ward.D_method.png"),
+    filename = paste0("figures/hierarchical_heatmap/EE_",ind,"_hierarchical_heatmap_mu_star_ward.D_method.png"),
     width = 10,
     height = 12
   )
   
   # ---------- 单独保存行聚类树图（参数） ----------
-  png(paste0("figures/hierarchical_heatmap/EE_",ind,"_row_dendrogram_standardised_ward.D_method.png"), width = 2200, height = 4000, res = 150)
+  png(paste0("figures/hierarchical_heatmap/EE_",ind,"_row_dendrogram_ward.D_method.png"), width = 2200, height = 4000, res = 150)
   par(mar = c(5, 5, 4, 20))  # 试着留更大的左边距
   plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram", cex = 0.7)
   dev.off()
