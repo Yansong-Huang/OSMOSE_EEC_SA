@@ -32,11 +32,10 @@ EE_all[, species_id := fifelse(grepl("sp\\d+", param_name),
 
 EE_all[, trophic_group := fcase(
   species_id %in% c(0, 5, 15), "High",
-  species_id %in% c(1, 2, 3, 4, 6, 7, 8, 9, 10), "Medium",
+  species_id %in% c(1, 2, 3, 4, 6, 7, 8, 9, 10,13,14), "Medium",
   species_id %in% c(11, 12), "Low",
-  species_id %in% c(13, 14), "Cephalopod",
   species_id %in% c(16:26), "Resource",
-  is.na(species_id), "Unspecified",
+  is.na(species_id), "Fleet",
   default = "Unspecified"
 )]
 
@@ -129,7 +128,7 @@ server <- function(input, output, session) {
   
   species_list <- unique(na.omit(EE_all$param_species))
   # 指定灰色的组
-  gray_labels <- c("resource", "unspecified")
+  gray_labels <- c("resource", "fleet")
   
   # 将灰色组排在前面，其余组进行调色
   non_gray_labels <- setdiff(species_list, gray_labels)
@@ -173,8 +172,8 @@ server <- function(input, output, session) {
         x = "mu*",
         y = "sigma",
         color = switch(color_col,
-                       "param_type" = "Parameter Type",
-                       "trophic_group" = "Trophic Group",
+                       "param_type" = "Parameter type",
+                       "trophic_group" = "Trophic group",
                        "param_species" = "Species")
       ) +
       theme_minimal(base_size = 14) +
