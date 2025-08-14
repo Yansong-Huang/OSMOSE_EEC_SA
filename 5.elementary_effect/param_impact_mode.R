@@ -1,28 +1,55 @@
 rm(list = ls())
-
 library(dplyr)
 library(tidyr)
-library(stringr)
 library(readr)
+library(stringr)
 
 #-----------------------------
-# 1) 设置指标列表
+# 1) 设置指标和路径
 #-----------------------------
 indicators <- c("biomass_rel", "mean_length", "LFI", "yield_rel", "mean_TL")
+sp_list <- paste0("sp", 0:15)  # 主物种列表
 
 #-----------------------------
-# 2) 读取各指标矩阵并合并
-#    假设 CSV 文件结构：行=参数, 列=物种-指标组合, 值=0/1
+# 2) 找出每个指标下效应高的参数-物种组合，以Pareto法建立阈值
 #-----------------------------
-all_top <- lapply(indicators, function(ind) {
-  df <- read_csv(paste0("5.elementary_effect/EE_pattern/top10pct_", ind, ".csv"),
+
+all_top <- list()
+
+for(ind in indicators){
+  # 1) 读取原始 mu_star 表
+  df <- read_csv(paste0("5.elementary_effect/EE_outputs/EE_", ind, "_by_species_stats.csv"),
                  show_col_types = FALSE)
-
-  return(df)
-})
-
-names(all_top) <- indicators
-
+  
+  # 2) 过滤特定物种（LFI / yield_rel 排除 sp4, sp6）
+  df <- df %>%
+    filter(!(ind %in% c("LFI", "yield_rel") & species %in% c("sp4", "sp6")))
+  
+  #排除不对应主物种的参数
+  # 精确匹配 sp0-sp15，避免 sp16 被误保留
+  df <- df[
+    grepl("\\bsp([0-9]|1[0-5])\\b", df$param_name), , drop = FALSE
+  ]
+  
+  
+  # 3) 计算 Pareto 拐点阈值
+  all_mu <- sort(df$mu_star, decreasing = TRUE)
+  cum_eff <- cumsum(all_mu)/sum(all_mu)
+  pareto_idx <- which(cum_eff >= 0.5)[1]  # 例如 80% 累积贡献
+  threshold <- all_mu[pareto_idx]
+  
+  # 4) 生成 0-1 矩阵
+  df <- df %>%
+    mutate(signif = ifelse(mu_star >= threshold, 1, 0)) %>%
+    mutate(species_indicator = paste(species, ind, sep = "_")) %>%
+    select(param_name, species_indicator, signif) %>%
+    pivot_wider(names_from = species_indicator, values_from = signif, values_fill = 0)
+  
+  all_top[[ind]] <- df
+}
+#-----------------------------
+# 3)总结参数的效应模式
+#-----------------------------
 # 生成两个结果：分类表和汇总表
 results <- lapply(all_top, function(df) {
   
@@ -77,5 +104,3 @@ species_summary_list <- lapply(param_classes, function(df) {
       .groups = "drop"
     )
 })
-
-
