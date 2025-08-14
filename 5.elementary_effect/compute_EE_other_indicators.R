@@ -8,6 +8,7 @@ compute_morris_EE <- function(ind_list,
                               grid_jump,
                               levels,
                               agg_fun   = function(mat) mean(colMeans(mat, na.rm = TRUE), na.rm = TRUE),
+                              out_name  = "indicator",
                               out_dir   = "5.elementary_effect/EE_outputs") {
   ## ------- 0. 基本尺寸 -------
   n_step <- max(sim_key$step)
@@ -16,29 +17,31 @@ compute_morris_EE <- function(ind_list,
   n_sim  <- length(ind_list)
   stopifnot(n_sim == n_step * n_repl)
   
-  ## ------- 1. 把每个模拟矩阵聚合为单值 Ȳ -------
-  Y_mean <- vapply(ind_list, agg_fun, numeric(1))
+  ## ------- 1. 复制 sim_key 避免污染 -------
+  sim_key_local <- data.table::copy(sim_key)
   
-  sim_key[, Y_mean := Y_mean]   # 贴到键表
+  ## ------- 2. 把每个模拟矩阵聚合为单值 Ȳ -------
+  Y_mean <- vapply(ind_list, agg_fun, numeric(1))
+  sim_key_local[, Y_mean := Y_mean]   # 只修改局部副本
   rm(ind_list, Y_mean); gc()
   
-  ## ------- 2. ΔY & ΔX -------
+  ## ------- 3. ΔY & ΔX -------
   Delta <- grid_jump / (levels - 1)           # 无量纲步长
-  sim_mat_idx <- matrix(sim_key$simulation_id, nrow = n_step, ncol = n_repl)
+  sim_mat_idx <- matrix(sim_key_local$simulation_id, nrow = n_step, ncol = n_repl)
   
-  delta_Y <- sim_key$Y_mean[sim_mat_idx[2:n_step, ]] -
-    sim_key$Y_mean[sim_mat_idx[1:(n_step-1), ]]
+  delta_Y <- sim_key_local$Y_mean[sim_mat_idx[2:n_step, ]] -
+    sim_key_local$Y_mean[sim_mat_idx[1:(n_step-1), ]]
   
-  param_idx_mat <- matrix(sim_key$changed_param_idx,
+  param_idx_mat <- matrix(sim_key_local$changed_param_idx,
                           nrow = n_step, ncol = n_repl)[2:n_step, ]
   
-  ## ------- 3. 计算各参数 EE -------
+  ## ------- 4. 计算各参数 EE -------
   EE_list <- vector("list", n_param)
   for (p in seq_len(n_param)) {
     EE_list[[p]] <- delta_Y[param_idx_mat == p] / Delta
   }
   
-  ## ------- 4. μ, μ*, σ 统计 -------
+  ## ------- 5. μ, μ*, σ 统计 -------
   EE_stats <- data.table(
     param_id   = seq_len(n_param),
     param_name = param_names,
@@ -48,7 +51,7 @@ compute_morris_EE <- function(ind_list,
     n_ee       = vapply(EE_list, function(x) sum(!is.na(x)), integer(1))
   )
   
-  ## ------- 5. 保存 -------
+  ## ------- 6. 保存 -------
   dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
   fwrite(EE_stats, file = file.path(out_dir, paste0("EE_", out_name, "_stats.csv")))
   saveRDS(EE_list,  file = file.path(out_dir, paste0("EE_", out_name, "_raw.rds")))
@@ -111,3 +114,4 @@ compute_morris_EE(
     mean(colMeans(mat_sub, na.rm = TRUE), na.rm = TRUE)
   }
 )
+
