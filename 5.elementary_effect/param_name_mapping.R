@@ -82,7 +82,7 @@ transform_param_label <- function(pn) {
 get_species <- function(pn) {
   sp_match <- str_extract(pn, "sp\\d+")
   if (is.na(sp_match)) {
-    return("unspecified")
+    return("fleet")
   } else if (sp_match %in% names(sp_names)[1:16]) {
     return(sp_names[[sp_match]])  # sp0 到 sp15
   } else {

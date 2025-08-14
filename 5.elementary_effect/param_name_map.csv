@@ -15,10 +15,10 @@ mortality.additional.rate.sp12,Mortality,PIL,mortality.additional.rate.PIL
 mortality.additional.rate.sp13,Mortality,SQZ,mortality.additional.rate.SQZ
 mortality.additional.rate.sp14,Mortality,CTC,mortality.additional.rate.CTC
 mortality.additional.rate.sp15,Mortality,RJC,mortality.additional.rate.RJC
-fisheries.rate.base.fsh0,Fisheries,unspecified,fleet.catchability.BT
-fisheries.rate.base.fsh1,Fisheries,unspecified,fleet.catchability.MT
-fisheries.rate.base.fsh2,Fisheries,unspecified,fleet.catchability.NT
-fisheries.rate.base.fsh3,Fisheries,unspecified,fleet.catchability.OT
+fisheries.rate.base.fsh0,Fisheries,fleet,fleet.catchability.BT
+fisheries.rate.base.fsh1,Fisheries,fleet,fleet.catchability.MT
+fisheries.rate.base.fsh2,Fisheries,fleet,fleet.catchability.NT
+fisheries.rate.base.fsh3,Fisheries,fleet,fleet.catchability.OT
 species.catchability.fsh0.sp0,Fisheries,SYC,species.catchability.BT.SYC
 species.catchability.fsh0.sp1,Fisheries,MUR,species.catchability.BT.MUR
 species.catchability.fsh0.sp2,Fisheries,BIB,species.catchability.BT.BIB
