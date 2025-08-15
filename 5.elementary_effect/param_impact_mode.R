@@ -7,7 +7,7 @@ library(stringr)
 #-----------------------------
 # 1) 设置指标和路径
 #-----------------------------
-indicators <- c("biomass_rel", "mean_length", "LFI", "yield_rel", "mean_TL")
+indicators <- c("biomass_rel","yield_rel", "mean_TL", "LFI", "mean_length")
 sp_list <- paste0("sp", 0:15)  # 主物种列表
 
 #-----------------------------
@@ -35,7 +35,7 @@ for(ind in indicators){
   # 3) 计算 Pareto 拐点阈值
   all_mu <- sort(df$mu_star, decreasing = TRUE)
   cum_eff <- cumsum(all_mu)/sum(all_mu)
-  pareto_idx <- which(cum_eff >= 0.5)[1]  # 例如 80% 累积贡献
+  pareto_idx <- which(cum_eff >= 0.6)[1]  # 例如 80% 累积贡献
   threshold <- all_mu[pareto_idx]
   
   # 4) 生成 0-1 矩阵
@@ -104,3 +104,30 @@ species_summary_list <- lapply(param_classes, function(df) {
       .groups = "drop"
     )
 })
+
+
+species_summary_df <- bind_rows(
+  Map(function(ind, df) {
+    df %>% 
+      mutate(indicator = ind,
+             dominant_prop = round(dominant_prop, 2))  # 保留两位小数
+  }, indicators, species_summary_list)
+)
+
+species_summary_wide <- species_summary_df %>%
+  pivot_wider(
+    names_from = indicator,
+    values_from = c(dominant_class, dominant_prop),
+    names_glue = "{indicator}_{.value}"
+  )
+
+# 设定物种顺序
+species_order <- paste0("sp", 0:15)
+
+species_order <- paste0("sp", 0:15)
+
+species_summary_wide <- species_summary_wide %>%
+  mutate(main_sp = factor(main_sp, levels = species_order)) %>%
+  arrange(main_sp)  # 按因子顺序排序行
+
+fwrite(species_summary_wide, "5.elementary_effect/EE_pattern/param_impact_mode.csv")
