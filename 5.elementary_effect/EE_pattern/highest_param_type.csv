@@ -1,0 +1,17 @@
+param_species,biomass_rel,yield_rel,mean_TL,LFI,mean_length
+SYC,Growth,Growth,Predation,Mortality,Growth
+MUR,Growth,Predation,Predation,Predation,Mortality
+BIB,Mortality,Growth,Mortality,Growth,Mortality
+WHG,Growth,Growth,Mortality,Growth,Mortality
+POD,Growth,Growth,Growth,Growth,Growth
+COD,Growth,Growth,Predation,Growth,Growth
+LYY,Growth,Growth,Predation,Growth,Growth
+SOL,Predation,Predation,Predation,Growth,Growth
+PLE,Growth,Growth,Growth,Growth,Mortality
+HOM,Growth,Growth,Predation,Growth,Mortality
+MAC,Growth,Growth,Mortality,Mortality,Mortality
+HER,Growth,Growth,Growth,Growth,Growth
+PIL,Growth,Growth,Mortality,Growth,Mortality
+SQZ,Growth,Growth,Predation,Growth,Growth
+CTC,Growth,Growth,Growth,Predation,Growth
+RJC,Growth,Growth,Predation,Growth,Growth
