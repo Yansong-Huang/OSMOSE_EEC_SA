@@ -7,6 +7,7 @@ library(stringr)
 library(dendextend)
 library(dplyr)
 library(gridExtra)
+library(gtable)
 
 
 # ----------准备----------
@@ -58,12 +59,6 @@ for(ind in indicators)
   )
   
   
-  
-  # 设定物种顺序
-  species_all <- paste0("sp", 0:15)
-  EE_stats[, species := factor(species, levels = species_all)]
-  
-  
   # ---------- 构建 heatmap 数据矩阵 ----------
   heat_mat <- dcast(EE_stats, param_newlabel ~ species, value.var = "mu_star")
   heat_mat <- as.data.frame(heat_mat)
@@ -72,15 +67,19 @@ for(ind in indicators)
   
   # 替换列名为物种缩写
   colnames(heat_mat) <- sp_names[colnames(heat_mat)]
-  
+  # 列按字母顺序排序
+  col_order <- sort(colnames(heat_mat))
+  heat_mat <- heat_mat[, col_order]
   heat_mat_log <- log1p(heat_mat)
   
   # ---------- 主热图 ----------
+  labels_rows_to_use <- if (ind == "mean_length") rownames(heat_mat_log) else rep("", nrow(heat_mat_log))
+  
   p <- pheatmap(
     mat = heat_mat_log,
     cluster_rows = FALSE,
     cluster_cols = FALSE,
-    labels_row = if (ind == "biomass") rownames(heat_mat_log) else "",  # 只有第一个子图显示
+    labels_row = labels_rows_to_use,  
     color = viridis(100),
     fontsize_row = 6,
     fontsize_col = 10,
@@ -88,11 +87,34 @@ for(ind in indicators)
     angle_col = 90,
     main = ind
   )
+  
+  
   plots[[ind]] <- p[[4]]  # pheatmap返回一个list，第4项是gtable对象
 }
 
+# 对齐宽度：找到所有子图的列宽，然后取最大值
+# 这一步会隐藏图例
+
+# 假设 plots[[1]] 是最左子图
+# 给行名列增加宽度
+plots[[1]]$widths[1] <- unit(2, "cm")  # 根据需要调整宽度
+
+# 假设想要每个子图总宽度相等，先计算其它子图热图区总宽度平均值
+heatBodyWidth <- plots[[2]]$widths[2:length(plots[[2]]$widths)]
+
+# 左侧子图：行名列加宽，但热图区宽度减小保持总宽度一致
+plots[[1]]$widths[2:length(plots[[1]]$widths)] <- heatBodyWidth - (plots[[1]]$widths[1] - unit(1, "cm"))
+
+# 找到热图主体列（从第2列开始）对齐
+maxWidthBody <- do.call(grid::unit.pmax, lapply(plots, function(x) x$widths[2:length(x$widths)]))
+
+for (i in seq_along(plots)) {
+  plots[[i]]$widths[2:length(plots[[i]]$widths)] <- maxWidthBody
+}
+
+
 # 把5张拼接成一张
-png("figures/heatmap/combined_heatmap.png", width = 6000, height = 4000, res = 300)
+png("figures/heatmap/combined_heatmap_no_legend.png", width = 4000, height = 4000, res = 300)
 grid.arrange(grobs = plots, ncol = 5)  # 两列排版
 dev.off()
   
