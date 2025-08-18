@@ -34,6 +34,29 @@ for(ind in indicators)
   # ---------- 合并 param_type 和 param_label ----------
   mapping <- fread("5.elementary_effect/param_name_map.csv")
   EE_stats <- merge(EE_stats, mapping, by = "param_name", all.x = TRUE)
+  #  param_species 大部分情况下直接用.特殊值时要补丁处理
+  EE_stats$param_species2 <- EE_stats$param_species
+  
+  # 1) fleet → catchability 后的字符串
+  is_fleet <- EE_stats$param_species == "fleet"
+  EE_stats$param_species2[is_fleet] <- sub(".*catchability\\.", "", EE_stats$param_label[is_fleet])
+  
+  # 2) resource → accessibility2fish.. 后的字符串
+  is_resource <- EE_stats$param_species == "resource"
+  EE_stats$param_species2[is_resource] <- sub(".*accessibility2fish\\.", "", EE_stats$param_label[is_resource])
+  
+  # 3) species_catchability → 原物种 + "." + catchability后第一个点之前的部分
+  is_spcat <- EE_stats$param_process == "species_catchability"
+  catch_part <- sub(".*catchability\\.([^\\.]+)\\..*", "\\1", EE_stats$param_label[is_spcat])
+  EE_stats$param_species2[is_spcat] <- paste0(EE_stats$param_species[is_spcat], ".", catch_part)
+  
+  # 最终新标签
+  EE_stats$param_newlabel <- paste0(
+    EE_stats$param_species2, "-",
+    substr(EE_stats$param_type, 1, 4), "-",
+    EE_stats$param_order
+  )
+  
   
   
   # 设定物种顺序
@@ -42,9 +65,9 @@ for(ind in indicators)
   
   
   # ---------- 构建 heatmap 数据矩阵 ----------
-  heat_mat <- dcast(EE_stats, param_label ~ species, value.var = "mu_star")
+  heat_mat <- dcast(EE_stats, param_newlabel ~ species, value.var = "mu_star")
   heat_mat <- as.data.frame(heat_mat)
-  rownames(heat_mat) <- heat_mat$param_label
+  rownames(heat_mat) <- heat_mat$param_newlabel
   heat_mat <- as.matrix(heat_mat[, -1])
   
   # 替换列名为物种缩写
@@ -57,7 +80,7 @@ for(ind in indicators)
     mat = heat_mat_log,
     cluster_rows = FALSE,
     cluster_cols = FALSE,
-    labels_row = "",        # 隐藏参数名标签
+    labels_row = if (ind == "biomass") rownames(heat_mat_log) else "",  # 只有第一个子图显示
     color = viridis(100),
     fontsize_row = 6,
     fontsize_col = 10,
@@ -69,7 +92,7 @@ for(ind in indicators)
 }
 
 # 把5张拼接成一张
-png("figures/heatmap/combined_heatmap.png", width = 5000, height = 3000, res = 500)
+png("figures/heatmap/combined_heatmap.png", width = 6000, height = 4000, res = 300)
 grid.arrange(grobs = plots, ncol = 5)  # 两列排版
 dev.off()
   
