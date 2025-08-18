@@ -97,8 +97,40 @@ mapping[, param_label := transform_param_label(param_name)]
 mapping[, param_species := sapply(param_name, get_species)]
 setcolorder(mapping, c("param_name", "param_type", "param_species", "param_label"))
 
+# ------------ 正则规则映射表 ------------
+process_patterns <- list(
+  "^mortality\\.additional\\.rate"              = c("additional_mortality", 1),
+  "^mortality\\.additional\\.larva\\.rate"      = c("larval_mortality", 2),
+  "^fisheries\\.rate\\.base"                    = c("fleet_catchability", 1),
+  "^species\\.catchability"                     = c("species_catchability", 2),
+  "^species\\.length2weight\\.condition\\.factor" = c("allometric_growth", 1),
+  "^species\\.k"                                = c("vb_growth_k", 2),
+  "^species\\.l0"                               = c("vb_growth_l0", 3),
+  "^species\\.linf"                             = c("vb_growth_linf", 4),
+  "^species\\.maturity\\.size\\.ratio"          = c("maturity_size", 5),
+  "^predation\\.predPrey\\.sizeRatio\\.teta"    = c("predation_teta", 1),
+  "^predation\\.predPrey\\.sizeRatio\\.alpha"   = c("predation_alpha", 2),
+  "^species\\.accessibility2fish"               = c("prey_field", 1)
+)
+
+# ------------ 匹配函数 ------------
+get_process_and_order <- function(pn) {
+  for (pat in names(process_patterns)) {
+    if (str_detect(pn, pat)) {
+      vals <- process_patterns[[pat]]
+      return(list(vals[1], as.integer(vals[2])))
+    }
+  }
+  return(list(NA_character_, NA_integer_))
+}
+
+# ------------ 增加 param_process 与 param_order ------------
+mapping[, c("param_process", "param_order") := get_process_and_order(param_name), 
+        by = param_name]
+
 # ------------ 导出 CSV ------------
 fwrite(mapping, "5.elementary_effect/param_name_map.csv")
 
-# 示例输出展示
+# 示例输出
 print(mapping)
+
