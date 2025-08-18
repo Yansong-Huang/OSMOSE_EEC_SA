@@ -16,7 +16,7 @@ sp_names <- c(
   "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC"
 )
 # 指标
-indicators <- c("biomass_rel", "mean_length", "LFI", "yield_rel", "mean_TL")
+indicators <- c("biomass", "mean_length", "LFI", "yield", "mean_TL")
 
 for(ind in indicators)
 {
@@ -24,7 +24,7 @@ for(ind in indicators)
   EE_stats <- fread(paste0("5.elementary_effect/EE_outputs/EE_",ind,"_by_species_stats.csv"))
   
   # non-exploited species 
-  if(ind %in% c("LFI", "yield_rel"))
+  if(ind %in% c("LFI", "yield"))
     EE_stats <- filter(EE_stats, !(species %in% c("sp4", "sp6")))
   
   # ---------- 合并 param_type 和 param_label ----------
@@ -70,15 +70,19 @@ for(ind in indicators)
     border_color = NA,
     angle_col = 45,   # 横坐标文字旋转 45 度
     main = "Clustered Heatmap of μ* (log1p)",
-    filename = paste0("figures/hierarchical_heatmap/EE_",ind,"_hierarchical_heatmap_mu_star_ward.D_method.png"),
+    filename = paste0("figures/hierarchical_heatmap/heatmap_",ind,"_mu_star_ward.D_method.png"),
     width = 10,
     height = 12
   )
   
   # ---------- 单独保存行聚类树图（参数） ----------
-  png(paste0("figures/hierarchical_heatmap/EE_",ind,"_row_dendrogram_ward.D_method.png"), width = 2200, height = 4000, res = 150)
+  png(paste0("figures/hierarchical_heatmap/param_dendrogram_",ind,"_ward.D_method.png"), width = 2200, height = 4000, res = 150)
   par(mar = c(5, 5, 4, 20))  # 试着留更大的左边距
   plot(row_dend, horiz = TRUE, main = "Parameter Clustering Dendrogram", cex = 0.7)
   dev.off()
-  
+  # 
+  # # ---------- 单独保存列聚类树图（物种） ----------
+  png(paste0("figures/hierarchical_heatmap/species_dendrogram_",ind,"_ward.D_method.png"), width = 800, height = 400)
+  plot(col_dend, main = "Species Clustering Dendrogram")
+  dev.off()
 }
