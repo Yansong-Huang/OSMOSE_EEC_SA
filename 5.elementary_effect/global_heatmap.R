@@ -18,7 +18,9 @@ sp_names <- c(
   "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC"
 )
 # 指标
-indicators <- c("biomass", "mean_length", "LFI", "yield", "mean_TL")
+indicators <- c("biomass", "yield", "mean_TL", "LFI", "mean_length")
+
+plots <- list()
 
 for(ind in indicators)
 {
@@ -51,19 +53,23 @@ for(ind in indicators)
   heat_mat_log <- log1p(heat_mat)
   
   # ---------- 主热图 ----------
-  pheatmap(
+  p <- pheatmap(
     mat = heat_mat_log,
-    cluster_rows = FALSE,   # 不聚类
-    cluster_cols = FALSE,   # 不聚类
+    cluster_rows = FALSE,
+    cluster_cols = FALSE,
+    labels_row = "",        # 隐藏参数名标签
     color = viridis(100),
     fontsize_row = 6,
     fontsize_col = 10,
     border_color = NA,
-    angle_col = 45,
-    main = paste("Heatmap of μ* (log1p) -", ind),
-    filename = paste0("figures/heatmap/heatmap_",ind,"_mu_star.png"),
-    width = 10,
-    height = 12
+    angle_col = 90,
+    main = ind
   )
-  
+  plots[[ind]] <- p[[4]]  # pheatmap返回一个list，第4项是gtable对象
 }
+
+# 把5张拼接成一张
+png("figures/heatmap/combined_heatmap.png", width = 5000, height = 3000, res = 500)
+grid.arrange(grobs = plots, ncol = 5)  # 两列排版
+dev.off()
+  
