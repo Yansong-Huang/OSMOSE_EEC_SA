@@ -171,9 +171,9 @@ predation.predPrey.sizeRatio.alpha.sp3.stage1,Predation,WHG,predation.size.ratio
 predation.predPrey.sizeRatio.teta.sp4.stage1,Predation,POD,predation.size.ratio.teta.POD.stage1,predation_teta,1
 predation.predPrey.sizeRatio.alpha.sp4.stage1,Predation,POD,predation.size.ratio.alpha.POD.stage1,predation_alpha,2
 predation.predPrey.sizeRatio.teta.sp5.stage1,Predation,COD,predation.size.ratio.teta.COD.stage1,predation_teta,1
-predation.predPrey.sizeRatio.teta.sp5.stage2,Predation,COD,predation.size.ratio.teta.COD.stage2,predation_teta,1
+predation.predPrey.sizeRatio.teta.sp5.stage2,Predation,COD,predation.size.ratio.teta.COD.stage2,predation_teta,3
 predation.predPrey.sizeRatio.alpha.sp5.stage1,Predation,COD,predation.size.ratio.alpha.COD.stage1,predation_alpha,2
-predation.predPrey.sizeRatio.alpha.sp5.stage2,Predation,COD,predation.size.ratio.alpha.COD.stage2,predation_alpha,2
+predation.predPrey.sizeRatio.alpha.sp5.stage2,Predation,COD,predation.size.ratio.alpha.COD.stage2,predation_alpha,4
 predation.predPrey.sizeRatio.teta.sp6.stage1,Predation,LYY,predation.size.ratio.teta.LYY.stage1,predation_teta,1
 predation.predPrey.sizeRatio.alpha.sp6.stage1,Predation,LYY,predation.size.ratio.alpha.LYY.stage1,predation_alpha,2
 predation.predPrey.sizeRatio.teta.sp7.stage1,Predation,SOL,predation.size.ratio.teta.SOL.stage1,predation_teta,1

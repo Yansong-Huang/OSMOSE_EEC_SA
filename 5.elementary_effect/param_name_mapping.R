@@ -1,3 +1,4 @@
+rm(list = ls())
 library(data.table)
 library(stringr)
 
@@ -98,6 +99,7 @@ mapping[, param_species := sapply(param_name, get_species)]
 setcolorder(mapping, c("param_name", "param_type", "param_species", "param_label"))
 
 # ------------ 正则规则映射表 ------------
+# ------------ 正则规则映射表 ------------
 process_patterns <- list(
   "^mortality\\.additional\\.rate"              = c("additional_mortality", 1),
   "^mortality\\.additional\\.larva\\.rate"      = c("larval_mortality", 2),
@@ -108,13 +110,28 @@ process_patterns <- list(
   "^species\\.l0"                               = c("vb_growth_l0", 3),
   "^species\\.linf"                             = c("vb_growth_linf", 4),
   "^species\\.maturity\\.size\\.ratio"          = c("maturity_size", 5),
-  "^predation\\.predPrey\\.sizeRatio\\.teta"    = c("predation_teta", 1),
-  "^predation\\.predPrey\\.sizeRatio\\.alpha"   = c("predation_alpha", 2),
+  "^predation\\.predPrey\\.sizeRatio\\.teta"    = c("predation_teta", 1),  # 默认值
+  "^predation\\.predPrey\\.sizeRatio\\.alpha"   = c("predation_alpha", 2), # 默认值
   "^species\\.accessibility2fish"               = c("prey_field", 1)
 )
 
-# ------------ 匹配函数 ------------
+# ------------ 匹配函数（含 stage 特殊逻辑）------------
 get_process_and_order <- function(pn) {
+  # 特殊情况：predation + stage
+  if (str_detect(pn, "predation\\.predPrey\\.sizeRatio\\.teta") & str_detect(pn, "stage1")) {
+    return(list("predation_teta", 1))
+  }
+  if (str_detect(pn, "predation\\.predPrey\\.sizeRatio\\.alpha") & str_detect(pn, "stage1")) {
+    return(list("predation_alpha", 2))
+  }
+  if (str_detect(pn, "predation\\.predPrey\\.sizeRatio\\.teta") & str_detect(pn, "stage2")) {
+    return(list("predation_teta", 3))
+  }
+  if (str_detect(pn, "predation\\.predPrey\\.sizeRatio\\.alpha") & str_detect(pn, "stage2")) {
+    return(list("predation_alpha", 4))
+  }
+  
+  # 通用匹配
   for (pat in names(process_patterns)) {
     if (str_detect(pn, pat)) {
       vals <- process_patterns[[pat]]
@@ -129,8 +146,8 @@ mapping[, c("param_process", "param_order") := get_process_and_order(param_name)
         by = param_name]
 
 # ------------ 导出 CSV ------------
-fwrite(mapping, "5.elementary_effect/param_name_map.csv")
+# fwrite(mapping, "5.elementary_effect/param_name_map.csv")
 
 # 示例输出
-print(mapping)
+# print(mapping)
 
