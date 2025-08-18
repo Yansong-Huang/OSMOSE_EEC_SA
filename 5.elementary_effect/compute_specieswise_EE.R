@@ -88,55 +88,90 @@ param_names <- readRDS("2.get-doe/doe/par_names_0425.rds")
 
 
 # ==== 2. 计算 μ*：基于未经标准化的原始值 ====
-LFI_list <- readRDS("4.indicators/indicators_output/lfi_sp.rds")
-compute_specieswise_EE(
-  ind_list    = LFI_list,
-  sim_key     = sim_key,
-  param_names = param_names,
-  grid_jump   = 4,
-  levels      = 8,
-  out_name    = "LFI",
-  out_dir     = "5.elementary_effect/EE_outputs",
-  agg_fun_species <- function(arr) {
-    apply(arr[,3:20 , ], 1, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
-  } # TODO 此处的维度顺序和其他指标不同。在上一环节的脚本中已经修正。未来决定是否需要重新跑。
-)
-## 释放大对象
-rm(LFI_list)
+# LFI_list <- readRDS("4.indicators/indicators_output/lfi_sp.rds")
+# compute_specieswise_EE(
+#   ind_list    = LFI_list,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "LFI",
+#   out_dir     = "5.elementary_effect/EE_outputs",
+#   agg_fun_species <- function(arr) {
+#     apply(arr[,3:20 , ], 1, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+#   } # TODO 此处的维度顺序和其他指标不同。在上一环节的脚本中已经修正。未来决定是否需要重新跑。
+# )
+# ## 释放大对象
+# rm(LFI_list)
+# 
+# #平均营养级
+# mean_TL_list <- readRDS("4.indicators/indicators_output/meanTL_by_sp.rds")
+# compute_specieswise_EE(
+#   ind_list    = mean_TL_list,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "mean_TL",
+#   out_dir     = "5.elementary_effect/EE_outputs",
+#   agg_fun_species <- function(arr) {
+#     apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+#     }
+# )
+# ## 释放大对象
+# rm(mean_TL_list)
+# 
+# # 平均体长
+# mean_length_list <- readRDS("4.indicators/indicators_output/meanLength_by_sp.rds")
+# compute_specieswise_EE(
+#   ind_list    = mean_length_list,
+#   sim_key     = sim_key,
+#   param_names = param_names,
+#   grid_jump   = 4,
+#   levels      = 8,
+#   out_name    = "mean_length",
+#   out_dir     = "5.elementary_effect/EE_outputs",
+#   agg_fun_species <- function(arr) {
+#         apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+#       }
+# )
+# ## 释放大对象
+# rm(mean_length_list)
 
-#平均营养级
-mean_TL_list <- readRDS("4.indicators/indicators_output/meanTL_by_sp.rds")
+# 生物量
+biomass_list <- readRDS("4.indicators/indicators_output/biomass.rds")
 compute_specieswise_EE(
-  ind_list    = mean_TL_list,
+  ind_list    = biomass_list,
   sim_key     = sim_key,
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "mean_TL",
+  out_name    = "biomass",
   out_dir     = "5.elementary_effect/EE_outputs",
   agg_fun_species <- function(arr) {
     apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
-    }
+  }
 )
 ## 释放大对象
-rm(mean_TL_list)
+rm(biomass_list)
 
-# 平均体长
-mean_length_list <- readRDS("4.indicators/indicators_output/meanLength_by_sp.rds")
+# 捕捞量
+yield_list   <- readRDS("4.indicators/indicators_output/yield.rds")
 compute_specieswise_EE(
-  ind_list    = mean_length_list,
+  ind_list    = yield_list,
   sim_key     = sim_key,
   param_names = param_names,
   grid_jump   = 4,
   levels      = 8,
-  out_name    = "mean_length",
+  out_name    = "yield",
   out_dir     = "5.elementary_effect/EE_outputs",
   agg_fun_species <- function(arr) {
-        apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
-      }
+    apply(arr[3:20, , ], 2, function(mat) mean(mat, na.rm = TRUE))# 只取第3年到第20年的数据
+  }
 )
 ## 释放大对象
-rm(mean_length_list)
+rm(yield_list)
+
 # ==== 3. 相对基线标准化函数 ====
 # standardize_to_baseline <- function(ind_list, baseline_arr, method = "rel") {
 #   baseline_mean <- apply(baseline_arr, 2, mean, na.rm = TRUE)
