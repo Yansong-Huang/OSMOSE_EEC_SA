@@ -65,6 +65,11 @@ species_colors <- setNames(
 make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
   subdt <- dt[indicator == indicator_name]
   
+  # 前十个参数
+  top_labels <- subdt %>%
+    arrange(desc(mu_star)) %>%
+    head(10)
+  
   # 添加凸包和重心
   hull_data <- subdt %>%
     filter(!is.na(.data[[color_col]])) %>%
@@ -85,10 +90,21 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
                  alpha = 0.15, color = NA, inherit.aes = FALSE, show.legend = FALSE) +
     geom_point(data = centroid_data,
                aes(x = mu_star, y = sigma),
-               shape = 21, fill = "white", size = 2.5, stroke = 0.5, color = "black", inherit.aes = FALSE) +
+               shape = 21, fill = "white", size = 2.5, stroke = 0.5,
+               color = "black", inherit.aes = FALSE) +
     geom_text_repel(data = centroid_data,
                     aes(x = mu_star, y = sigma, label = group),
                     size = 3, inherit.aes = FALSE, max.overlaps = 50) +
+    geom_text_repel(
+      data = top_labels,
+      aes(x = mu_star, y = sigma,
+          label = ifelse(is.na(param_label), param_name, param_label),
+          color = .data[[color_col]]),   # 用 color_col，而不是 group_var
+      size = 3,
+      inherit.aes = FALSE,
+      max.overlaps = 50,
+      show.legend = FALSE
+    )+
     scale_x_log10() +
     scale_y_log10() +
     scale_color_manual(values = color_scale) +
@@ -98,19 +114,23 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
     theme(legend.position = "bottom")
 }
 
+
 plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
-  indicators <- c("Total Biomass", "Total Yield", "LFI40", "Mean Length", "Mean Trophic Level")
+  indicators <- c("Total Biomass", "Total Yield", "Mean Trophic Level", "LFI40", "Mean Length")
   
   plots <- lapply(indicators, function(ind) {
-    make_one_plot(dt, ind, color_col, color_scale)
+    make_one_plot(dt, ind, color_col, color_scale) +
+      theme(legend.position = "bottom")  # 先保留，后面 collect
   })
   
-  fig <- wrap_plots(plots, ncol = 2) +
-    plot_annotation(title = paste("Elementary Effects colored by", color_col))
+  fig <- wrap_plots(plots, ncol = 3, guides = "collect") +
+    plot_layout(guides = "collect") +
+    plot_annotation(title = paste("Elementary Effects colored by", color_col)) &
+    theme(legend.position = "bottom")
   
-  ggsave(outfile, fig, width = 12, height = 10)
+  ggsave(outfile, fig, width = 12, height = 8, dpi = 300)  # 只输出 PNG
 }
 
 # ---------- 生成两张复合图 ----------
-plot_indicator_panels(EE_all, "param_type",   param_colors,   "EE_panels_by_param_type.pdf")
-plot_indicator_panels(EE_all, "param_species_plot", species_colors, "EE_panels_by_species.pdf")
+plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type.png")
+plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species.png")
