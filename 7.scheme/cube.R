@@ -45,9 +45,17 @@ green_traj <- data.frame(x=c(0.5, 0.0, 0.0, 0.0),
 blue_traj  <- data.frame(x=c(0.5, 1.0, 1.0, 1.0),
                          y=c(1.0, 1.0, 1.0, 0.5),
                          z=c(1.0, 1.0, 0.5, 0.5))
-
+red_traj_1   <- data.frame(x=c(0.5),
+                         y=c(0.0),
+                         z=c(0.5))
+red_traj_2   <- data.frame(x=c(0.5, 0.5),
+                         y=c(0.0, 0.0),
+                         z=c(0.5, 0.0))
+red_traj_3   <- data.frame(x=c(0.5, 0.5, 1.0),
+                         y=c(0.0, 0.0, 0.0),
+                         z=c(0.5, 0.0, 0.0))
 # ---- 绘图 ----
-p <- plot_ly() %>%
+p_three_traj <- plot_ly() %>%
   # 网格线
   add_trace(x = gx, y = gy, z = gz,
             type = 'scatter3d', mode = 'lines',
@@ -63,19 +71,19 @@ p <- plot_ly() %>%
             type = 'scatter3d', mode = 'lines+markers',
             line = list(color = 'red', width = 8),
             marker = list(size = 8, color = 'red'),
-            name = 'Factor A') %>%
+            name = 'Trajectory 1') %>%
   # 绿色轨迹
   add_trace(x = green_traj$x, y = green_traj$y, z = green_traj$z,
             type = 'scatter3d', mode = 'lines+markers',
             line = list(color = 'green', width = 8),
             marker = list(size = 8, color = 'green'),
-            name = 'Factor B') %>%
+            name = 'Trajectory 2') %>%
   # 蓝色轨迹
   add_trace(x = blue_traj$x, y = blue_traj$y, z = blue_traj$z,
             type = 'scatter3d', mode = 'lines+markers',
             line = list(color = 'blue', width = 8),
             marker = list(size = 8, color = 'blue'),
-            name = 'Factor C') %>%
+            name = 'Trajectory 3') %>%
   # 坐标轴、刻度、视角
   layout(
     scene = list(
@@ -91,4 +99,32 @@ p <- plot_ly() %>%
   )
 
 # 显示图
-p
+p_red_traj_3 <- plot_ly() %>%
+  # 网格线
+  add_trace(x = gx, y = gy, z = gz,
+            type = 'scatter3d', mode = 'lines',
+            line = list(color = 'grey', width = 2),
+            showlegend = FALSE) %>%
+  # 所有小黑点（格点）
+  add_trace(x = grid$x, y = grid$y, z = grid$z,
+            type = 'scatter3d', mode = 'markers',
+            marker = list(size = 3, color = 'black'),
+            showlegend = FALSE) %>%
+  # 红色轨迹（粗线 + 大球）
+  add_trace(x = red_traj_3$x, y = red_traj_3$y, z = red_traj_3$z,
+            type = 'scatter3d', mode = 'lines+markers',
+            line = list(color = 'red', width = 8),
+            marker = list(size = 8, color = 'red')) %>%
+  # 坐标轴、刻度、视角
+  layout(
+    scene = list(
+      xaxis = list(title = 'Factor A',
+                   tickmode = 'array', tickvals = levels, ticktext = as.character(levels)),
+      yaxis = list(title = 'Factor B',
+                   tickmode = 'array', tickvals = levels, ticktext = as.character(levels)),
+      zaxis = list(title = 'Factor C',
+                   tickmode = 'array', tickvals = levels, ticktext = as.character(levels)),
+      camera = list(eye = list(x = 1.6, y = 1.2, z = 0.7))
+    ),
+    margin = list(l=0, r=0, b=0, t=30)
+  )
