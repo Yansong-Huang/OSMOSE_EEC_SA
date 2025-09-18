@@ -99,12 +99,14 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
       data = top_labels,
       aes(x = mu_star, y = sigma,
           label = ifelse(is.na(param_label), param_name, param_label),
-          color = .data[[color_col]]),   # 用 color_col，而不是 group_var
+          color = .data[[color_col]]),
       size = 3,
       inherit.aes = FALSE,
-      max.overlaps = 50,
-      show.legend = FALSE
-    )+
+      max.overlaps = 15,    # 不要太大
+      box.padding = 0.5,    # 文字周围留白
+      point.padding = 0.3,  # 点和文字间距
+      force = 1             # 排斥力
+    )
     scale_x_log10() +
     scale_y_log10() +
     scale_color_manual(values = color_scale) +
@@ -126,9 +128,9 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
   fig <- wrap_plots(plots, ncol = 3, guides = "collect") +
     plot_layout(guides = "collect") +
     plot_annotation(title = paste("Elementary Effects colored by", color_col)) &
-    theme(legend.position = "bottom")
+    theme(legend.position = "right")
   
-  ggsave(outfile, fig, width = 12, height = 8, dpi = 300)  # 只输出 PNG
+  ggsave(outfile, fig, width = 13, height = 8, dpi = 300)  # 只输出 PNG
 }
 
 # ---------- 生成两张复合图 ----------
