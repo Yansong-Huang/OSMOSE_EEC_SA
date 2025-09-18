@@ -105,8 +105,8 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
       max.overlaps = 15,    # 不要太大
       box.padding = 0.5,    # 文字周围留白
       point.padding = 0.3,  # 点和文字间距
-      force = 1             # 排斥力
-    )
+      force = 2.5             # 排斥力
+    )+
     scale_x_log10() +
     scale_y_log10() +
     scale_color_manual(values = color_scale) +
