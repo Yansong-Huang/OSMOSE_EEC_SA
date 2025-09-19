@@ -99,19 +99,22 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
       data = top_labels,
       aes(x = mu_star, y = sigma,
           label = ifelse(is.na(param_label), param_name, param_label),
-          color = .data[[color_col]]),
+          color = .data[[color_col]]),  # 顏色跟隨分組
       size = 3,
       inherit.aes = FALSE,
-      max.overlaps = 15,    # 不要太大
-      box.padding = 0.5,    # 文字周围留白
-      point.padding = 0.3,  # 点和文字间距
-      force = 2.5             # 排斥力
+      show.legend = FALSE,   # ✅ 不進圖例
+      max.overlaps = 20,
+      box.padding = 0.5,
+      point.padding = 0.3,
+      force = 2.5
     )+
+    geom_abline(slope = 1, intercept = 0, 
+                linetype = "dashed", color = "darkgrey") +
     scale_x_log10() +
     scale_y_log10() +
     scale_color_manual(values = color_scale) +
     scale_fill_manual(values = color_scale) +
-    labs(x = "mu*", y = "sigma", title = indicator_name, color = color_col) +
+    labs(x = "mu*", y = "sigma", title = indicator_name) +   # 移除 color=...
     theme_minimal(base_size = 12) +
     theme(legend.position = "bottom")
 }
@@ -121,14 +124,14 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
   indicators <- c("Total Biomass", "Total Yield", "Mean Trophic Level", "LFI40", "Mean Length")
   
   plots <- lapply(indicators, function(ind) {
-    make_one_plot(dt, ind, color_col, color_scale) +
-      theme(legend.position = "bottom")  # 先保留，后面 collect
+    make_one_plot(dt, ind, color_col, color_scale)
   })
   
   fig <- wrap_plots(plots, ncol = 3, guides = "collect") +
     plot_layout(guides = "collect") +
     plot_annotation(title = paste("Elementary Effects colored by", color_col)) &
-    theme(legend.position = "right")
+    theme(legend.position = "right") &
+    labs(color = color_col, fill = color_col)   # ✅ 統一設置 legend 標題
   
   ggsave(outfile, fig, width = 13, height = 8, dpi = 300)  # 只输出 PNG
 }
