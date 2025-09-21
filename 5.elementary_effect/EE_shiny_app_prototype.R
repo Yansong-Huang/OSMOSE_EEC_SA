@@ -84,7 +84,7 @@ ui <- fluidPage(
     ),
     mainPanel(
       verbatimTextOutput("click_info"),
-      plotOutput("eePlot", height = "500px", click = "plot_click")
+      plotOutput("eePlot", height = "400px", click = "plot_click")
     )
   )
 )
@@ -164,8 +164,8 @@ server <- function(input, output, session) {
       geom_text_repel(
         data = top_labels,
         aes(label = ifelse(is.na(param_label), param_name, param_label)),
-        size = 3,
-        max.overlaps = 50,
+        size = 4,
+        max.overlaps = 20,
         show.legend = FALSE
       ) +
       labs(
@@ -178,7 +178,7 @@ server <- function(input, output, session) {
       ) +
       theme_minimal(base_size = 14) +
       theme(
-        legend.position = "bottom",
+        legend.position = "right",
         plot.margin = margin(5, 20, 5, 5),
         plot.title.position = "plot"
       )
@@ -218,7 +218,7 @@ server <- function(input, output, session) {
       geom_text_repel(
         data = centroid_data,
         aes(x = mu_star, y = sigma, label = group),
-        size = 3, inherit.aes = FALSE, max.overlaps = 50
+        size = 4, inherit.aes = FALSE, max.overlaps = 50
       )
     }
     if (scale_mode() == "log") {
