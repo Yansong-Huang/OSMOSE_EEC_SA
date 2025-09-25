@@ -30,7 +30,7 @@ gg_violin_mu_star <- function(data) {
     geom_violin(trim = FALSE, alpha = 0.6) +
     geom_jitter(width = 0.1, size = 1, alpha = 0.5) +  # 显示单个参数点
     facet_wrap(~indicator, scales = "free_y") +        # 每个指标一个分面，y轴独立
-    scale_y_continuous(name = expression(mu^"*")) +
+    scale_y_log10(name = expression(mu^"*")) +   # 🚀 对数坐标
     xlab("Parameter Type") +
     theme_bw() +
     theme(
