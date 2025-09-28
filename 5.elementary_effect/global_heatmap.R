@@ -5,6 +5,12 @@ library(ComplexHeatmap)
 library(circlize)
 library(viridis)
 
+# ----------准备---------- 
+#物种映射 
+sp_names <- c( "sp0" = "SYC", "sp1" = "MUR", "sp2" = "BIB", "sp3" = "WHG", "sp4" = "POD", "sp5" = "COD", "sp6" = "LYY", "sp7" = "SOL", "sp8" = "PLE", "sp9" = "HOM", "sp10" = "MAC", "sp11" = "HER", "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC" ) 
+# 指标 
+indicators <- c("biomass", "yield", "mean_TL", "LFI", "mean_length")
+
 plots <- list()
 
 for(ind in indicators){
@@ -37,22 +43,25 @@ for(ind in indicators){
   heat_mat <- heat_mat[, sort(colnames(heat_mat))]
   heat_mat_log <- log1p(heat_mat)
   
-  # 每张子图独立 heatmap
+  # 判断是否最后一个子图
+  show_rows_flag <- ind == tail(indicators, 1)
+  
   ht <- Heatmap(
     heat_mat_log,
-    name = ind,               # 🔑 用指标名保证图例独立
+    name = ind,               
     col = viridis(100),
     cluster_rows = FALSE,
     cluster_columns = FALSE,
-    show_row_names = FALSE,   # 隐藏行标签
-    show_column_names = TRUE, # 显示列标签
+    show_row_names = show_rows_flag,   # 只在最后一个图显示行标签
+    show_column_names = TRUE,          
     column_names_side = "bottom",
     column_names_rot = 90,
+    column_title = ind,                # 指标名放在上方
+    column_title_side = "top",         
     heatmap_legend_param = list(
-      direction = "horizontal",  # 横向显示
+      direction = "horizontal",
       title_position = "topcenter"
-    ),
-    row_title = ind
+    )
   )
   
   plots[[ind]] <- ht
@@ -62,7 +71,7 @@ for(ind in indicators){
 ht_list <- Reduce("+", plots)
 
 # 绘图并保存
-png("figures/heatmap/combined_heatmap_complex_individual_legends.png",
+png("figures/heatmap/combined_heatmap_complex_individual_legends_test.png",
     width = 4000, height = 8000, res = 300)
 draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE)
 dev.off()
