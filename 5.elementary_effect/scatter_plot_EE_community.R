@@ -180,5 +180,5 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
 
 
 # ---------- 生成两张复合图 ----------
-# plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type_test.png")
-plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species_test.png")
+plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_process.png")
+plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species.png")
