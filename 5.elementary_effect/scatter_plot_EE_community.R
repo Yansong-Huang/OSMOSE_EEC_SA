@@ -4,6 +4,7 @@ library(ggplot2)
 library(dplyr)
 library(ggrepel)
 library(viridis)
+library(colorspace)
 library(patchwork)
 
 # ---------- 数据读取 ----------
@@ -54,7 +55,8 @@ species_list <- unique(na.omit(EE_all$param_species))
 gray_labels <- c("resource", "fleet")
 non_gray_labels <- setdiff(species_list, gray_labels)
 n_colors <- length(non_gray_labels)
-palette_colors <- viridis(n_colors)
+palette_colors <- rainbow_hcl(n_colors)  # 高亮对比、色相均匀分布
+
 
 species_colors <- setNames(
   c(rep("#B0B0B0", length(gray_labels)), palette_colors),
@@ -91,8 +93,8 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
   
   # 图例标题
   legend_title_map <- list(
-    param_type = "Parameter process",
-    param_species_plot = "Parameter species"
+    param_type = "Parameter categorized by process",
+    param_species_plot = "Parameter categorized by species"
   )
   
   legend_name <- legend_title_map[[color_col]]
@@ -178,5 +180,5 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
 
 
 # ---------- 生成两张复合图 ----------
-plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type_test.png")
+# plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type_test.png")
 plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species_test.png")
