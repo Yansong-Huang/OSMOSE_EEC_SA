@@ -132,18 +132,13 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
     scale_y_log10(name = expression(sigma)) +
     
     scale_color_manual(values = color_scale, name = legend_name) +
-    scale_fill_manual(values = color_scale, name = legend_name, guide = "none") +
-    
+    scale_fill_manual(values = color_scale, guide = "none")+
+  
     guides(
       color = guide_legend(order = 1,
                            override.aes = list(
                              shape = 16, size = 3, alpha = 1, fill = NA
-                           )),
-      fill = guide_legend(order = 1,
-                          override.aes = list(
-                            shape = 22, size = 5, alpha = 0.35, colour = NA
-                          ))
-    ) +
+                           )))+
     
     labs(title = indicator_name) +
     theme_minimal(base_size = 12) +
