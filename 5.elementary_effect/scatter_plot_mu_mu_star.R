@@ -27,14 +27,13 @@ dt <- as.data.table(EE_all)
 
 # 生成 mu / mu* 散点图
 gg_scatter_mu_ratio <- function(data) {
-  # 先计算比值
   data[, mu_ratio := mu / mu_star]
   
   ggplot(data, aes(x = mu_star, y = mu_ratio, color = param_type)) +
     geom_point(alpha = 0.7, size = 2) +
-    facet_wrap(~indicator, scales = "free_y") +   # 每个指标独立 y 轴
-    scale_x_log10(name = expression(mu^"*")) +    # 横轴对数坐标
-    scale_y_log10(name = expression(mu / mu^"*")) + # 纵轴对数坐标也可以
+    facet_wrap(~indicator, scales = "free_x") +   # 横轴自由
+    xlab(expression(mu^"*")) +
+    ylab(expression(mu / mu^"*")) +
     theme_bw() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
