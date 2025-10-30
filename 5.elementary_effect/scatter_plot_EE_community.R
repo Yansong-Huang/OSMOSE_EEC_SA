@@ -89,7 +89,14 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
     group_by(group = .data[[color_col]]) %>%
     summarise(mu_star = mean(mu_star), sigma = mean(sigma), .groups = "drop")
   
-  legend_name <- color_col
+  # 图例标题
+  legend_title_map <- list(
+    param_type = "Parameter process",
+    param_species_plot = "Parameter species"
+  )
+  
+  legend_name <- legend_title_map[[color_col]]
+  
   
   p <- ggplot(subdt, aes(x = mu_star, y = sigma, color = .data[[color_col]])) +
     geom_point(size = 2, alpha = 0.6) +
