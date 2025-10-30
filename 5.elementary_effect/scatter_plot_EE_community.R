@@ -62,15 +62,21 @@ species_colors <- setNames(
 )
 
 # ---------- 作图函数 ----------
+library(ggplot2)
+library(dplyr)
+library(ggrepel)
+library(patchwork)
+
+# --------------------------
+# 单个指标绘图函数
+# --------------------------
 make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
   subdt <- dt[indicator == indicator_name]
   
-  # 前十个参数
   top_labels <- subdt %>%
     arrange(desc(mu_star)) %>%
     head(10)
   
-  # 添加凸包和重心
   hull_data <- subdt %>%
     filter(!is.na(.data[[color_col]])) %>%
     group_by(group = .data[[color_col]]) %>%
@@ -83,43 +89,75 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
     group_by(group = .data[[color_col]]) %>%
     summarise(mu_star = mean(mu_star), sigma = mean(sigma), .groups = "drop")
   
-  ggplot(subdt, aes(x = mu_star, y = sigma, color = .data[[color_col]])) +
+  legend_name <- color_col
+  
+  p <- ggplot(subdt, aes(x = mu_star, y = sigma, color = .data[[color_col]])) +
     geom_point(size = 2, alpha = 0.6) +
-    geom_polygon(data = hull_data,
-                 aes(x = mu_star, y = sigma, group = group, fill = group),
-                 alpha = 0.15, color = NA, inherit.aes = FALSE, show.legend = FALSE) +
-    geom_point(data = centroid_data,
-               aes(x = mu_star, y = sigma),
-               shape = 21, fill = "white", size = 2.5, stroke = 0.5,
-               color = "black", inherit.aes = FALSE) +
-    geom_text_repel(data = centroid_data,
-                    aes(x = mu_star, y = sigma, label = group),
-                    size = 3, inherit.aes = FALSE, max.overlaps = 50) +
+    
+    # 凸包填充，用同一变量，fill 不单独生成图例
+    geom_polygon(
+      data = hull_data,
+      aes(x = mu_star, y = sigma, group = group, fill = .data[[color_col]]),
+      alpha = 0.15, color = NA, inherit.aes = FALSE
+    ) +
+    
+    # 重心
+    geom_point(
+      data = centroid_data,
+      aes(x = mu_star, y = sigma),
+      shape = 21, fill = "white", size = 2.5, stroke = 0.5,
+      color = "black", inherit.aes = FALSE, show.legend = FALSE
+    ) +
+    
+    geom_text_repel(
+      data = centroid_data,
+      aes(x = mu_star, y = sigma, label = group),
+      size = 3, inherit.aes = FALSE, max.overlaps = 50, show.legend = FALSE
+    ) +
+    
     geom_text_repel(
       data = top_labels,
-      aes(x = mu_star, y = sigma,
-          label = ifelse(is.na(param_label), param_name, param_label),
-          color = .data[[color_col]]),  # 顏色跟隨分組
-      size = 3,
-      inherit.aes = FALSE,
-      show.legend = FALSE,   # ✅ 不進圖例
-      max.overlaps = 20,
-      box.padding = 0.5,
-      point.padding = 0.3,
-      force = 2.5
-    )+
-    geom_abline(slope = 1, intercept = 0, 
-                linetype = "dashed", color = "darkgrey") +
-    scale_x_log10() +
-    scale_y_log10() +
-    scale_color_manual(values = color_scale) +
-    scale_fill_manual(values = color_scale) +
-    labs(x = "mu*", y = "sigma", title = indicator_name) +   # 移除 color=...
+      aes(
+        x = mu_star, y = sigma,
+        label = ifelse(is.na(param_label), param_name, param_label),
+        color = .data[[color_col]]
+      ),
+      size = 3, inherit.aes = FALSE, show.legend = FALSE,
+      max.overlaps = 20, box.padding = 0.5, point.padding = 0.3, force = 2.5
+    ) +
+    
+    geom_abline(slope = 1, intercept = 0, linetype = "dashed", color = "darkgrey") +
+    
+    scale_x_log10(name = expression(mu^"*")) +
+    scale_y_log10(name = expression(sigma)) +
+    
+    scale_color_manual(values = color_scale, name = legend_name) +
+    scale_fill_manual(values = color_scale, name = legend_name, guide = "none") +
+    
+    guides(
+      color = guide_legend(order = 1,
+                           override.aes = list(
+                             shape = 16, size = 3, alpha = 1, fill = NA
+                           )),
+      fill = guide_legend(order = 1,
+                          override.aes = list(
+                            shape = 22, size = 5, alpha = 0.35, colour = NA
+                          ))
+    ) +
+    
+    labs(title = indicator_name) +
     theme_minimal(base_size = 12) +
-    theme(legend.position = "bottom")
+    theme(legend.position = "bottom",
+          legend.box = "horizontal",
+          legend.title = element_text(size = 10),
+          legend.text = element_text(size = 9))
+  
+  return(p)
 }
 
-
+# --------------------------
+# 多指标组合图
+# --------------------------
 plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
   indicators <- c("Total Biomass", "Total Yield", "Mean Trophic Level", "LFI40", "Mean Length")
   
@@ -127,15 +165,16 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
     make_one_plot(dt, ind, color_col, color_scale)
   })
   
-  fig <- wrap_plots(plots, ncol = 3, guides = "collect") +
+  # 多图合并，统一图例
+  fig <- wrap_plots(plots, ncol = 2, guides = "collect") +
     plot_layout(guides = "collect") +
-    plot_annotation(title = paste("Elementary Effects colored by", color_col)) &
-    theme(legend.position = "right") &
-    labs(color = color_col, fill = color_col)   # ✅ 統一設置 legend 標題
+    plot_annotation(theme = theme(legend.position = "bottom",
+                                  legend.box = "horizontal"))
   
-  ggsave(outfile, fig, width = 13, height = 8, dpi = 300)  # 只输出 PNG
+  ggsave(outfile, fig, width = 8, height = 13, dpi = 300)
 }
 
+
 # ---------- 生成两张复合图 ----------
-plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type.png")
-plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species.png")
+plot_indicator_panels(EE_all, "param_type",   param_colors,   "figures/EE_panels_by_param_type_test.png")
+plot_indicator_panels(EE_all, "param_species_plot", species_colors, "figures/EE_panels_by_species_test.png")
