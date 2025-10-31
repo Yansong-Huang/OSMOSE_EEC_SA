@@ -24,21 +24,30 @@ EE_all <- merge(EE_all, mapping, by = "param_name", all.x = TRUE)
 # 确保是 data.table 或 data.frame
 dt <- as.data.table(EE_all)
 
-# 基础小提琴图函数
-gg_violin_mu_star <- function(data) {
+param_colors <- c(
+  "Fisheries"   = "#E41A1C",
+  "Mortality"   = "#4DAF4A",
+  "Growth"      = "#377EB8",
+  "PreyField"   = "#E6B800",
+  "Predation"   = "#984EA3",
+  "Other"       = "grey70"
+)
+
+gg_box_mu_star <- function(data) {
   ggplot(data, aes(x = param_type, y = mu_star, fill = param_type)) +
-    geom_violin(trim = FALSE, alpha = 0.6) +
-    geom_jitter(width = 0.1, size = 1, alpha = 0.5) +  # 显示单个参数点
-    facet_wrap(~indicator, scales = "free_y") +        # 每个指标一个分面，y轴独立
-    scale_y_log10(name = expression(mu^"*")) +   # 🚀 对数坐标
+    geom_boxplot(alpha = 0.7, outlier.size = 1) +   # 箱形图
+    # geom_jitter(width = 0.1, size = 1, alpha = 0.5) + # 显示单个参数点
+    facet_wrap(~indicator, scales = "free_y") +     # 每个指标一个分面，y轴独立
+    scale_y_log10(name = expression(mu^"*")) +      # 对数坐标
+    scale_fill_manual(values = param_colors) +      # 自定义颜色方案
     xlab("Parameter Type") +
     theme_bw() +
     theme(
-      legend.position = "none",
-      axis.text.x = element_text(angle = 45, hjust = 1)
+      axis.text.x = element_text(angle = 45, hjust = 1),
+      legend.position = "none"                       # 不显示图例
     )
 }
 
 # 绘图
-p <- gg_violin_mu_star(dt)
+p <- gg_box_mu_star(dt)
 p
