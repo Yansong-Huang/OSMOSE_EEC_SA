@@ -24,16 +24,27 @@ EE_all <- merge(EE_all, mapping, by = "param_name", all.x = TRUE)
 # 确保是 data.table 或 data.frame
 dt <- as.data.table(EE_all)
 
+param_colors <- c(
+  "Fisheries"   = "#E41A1C",
+  "Mortality"   = "#4DAF4A",
+  "Growth"      = "#377EB8",
+  "PreyField"   = "#E6B800",
+  "Predation"   = "#984EA3",
+  "Other"       = "grey70"
+)
+
 
 # 生成 mu / mu* 散点图
+
 gg_scatter_mu_ratio <- function(data) {
   data[, mu_ratio := mu / mu_star]
   
   ggplot(data, aes(x = mu_star, y = mu_ratio, color = param_type)) +
     geom_point(alpha = 0.7, size = 2) +
     facet_wrap(~indicator, scales = "free_x") +   # 横轴自由
-    xlab(expression(mu^"*")) +
+    scale_x_log10(name = expression(log(mu^"*"))) +
     ylab(expression(mu / mu^"*")) +
+    scale_color_manual(values = param_colors) +   # 使用自定义颜色
     theme_bw() +
     theme(
       axis.text.x = element_text(angle = 45, hjust = 1),
