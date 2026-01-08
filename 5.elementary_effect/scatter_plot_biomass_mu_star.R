@@ -52,3 +52,10 @@ ggplot(plot_dt, aes(x = mean_biomass, y = mean_mu_star, label = param_species)) 
   theme(
     panel.grid.minor = element_blank()
   )
+
+ggplot(plot_dt, aes(x = reorder(param_species, mean_mu_star), y = mean_mu_star)) +
+  geom_point(size = 3, color = "#377EB8") +
+  coord_flip() +
+  ylab(expression(mean(mu^"*"))) +
+  xlab("Species (sorted by mean μ*)") +
+  theme_bw()
