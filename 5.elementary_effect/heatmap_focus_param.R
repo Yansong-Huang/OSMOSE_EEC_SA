@@ -21,8 +21,10 @@ sp_names <- c(
 )
 species_all <- paste0("sp", 0:15)
 # TODO 将指标和过滤物种关联（部分指标需要过滤非捕捞物种）
-# species_keep <- setdiff(species_all, c("sp4", "sp6"))
-species_keep <- species_all
+species_keep <- setdiff(species_all, c("sp4", "sp6"))
+# species_keep <- species_all
+
+
 # ---------- 绘图函数 ----------
 plot_heatmap_by_species <- function(data,
                                     species_col = "species",
@@ -47,6 +49,7 @@ plot_heatmap_by_species <- function(data,
   # 绘图
   p <- ggplot(data, aes_string(x = species_col, y = param_col, fill = value_col)) +
     geom_tile(color = NA) +
+    scale_y_discrete(labels = function(x) parse(text = x)) +
     labs(
       title = plot_title %||% paste("Heatmap of", value_col),
       x = "Species",
@@ -80,8 +83,8 @@ plot_heatmap_by_species <- function(data,
 
 # ---------- 循环参数 ----------
 # TODO 将指标和过滤物种关联（部分指标需要过滤非捕捞物种）
-indicators <- c("biomass_rel", "mean_length", "mean_TL") # indicators including poor cod and dragonet
-# "LFI", "yield_rel" # indicators without poor cod and dragonet
+# indicators <- c("biomass_rel", "mean_length", "mean_TL") # indicators including poor cod and dragonet
+indicators <- c("LFI", "yield_rel") # indicators without poor cod and dragonet
 metrics <- c("mu", "mu_star", "sigma")
 param_species <- unique(sp_names)  # 缩写
 
@@ -125,7 +128,12 @@ plot_one <- function(plot_indicator, metric_col, sel_param_sp) {
     sp_names = sp_names,
     species_order = species_all,
     scale_trans = "identity",
-    fill_label = metric_col,
+    fill_label = switch(metric_col,
+                                      mu      = expression(mu),
+                                      mu_star = expression(mu^"*"),
+                                      sigma   = expression(sigma)
+    )
+    ,
     plot_title = paste("EE", metric_col, "of", sel_param_sp, "parameters on", plot_indicator)
   )
   
