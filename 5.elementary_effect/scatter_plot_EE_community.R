@@ -93,8 +93,8 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
   
   # 图例标题
   legend_title_map <- list(
-    param_type = "Parameter categorized by process",
-    param_species_plot = "Parameter categorized by species"
+    param_type = "Parameter categorised by process",
+    param_species_plot = "Parameter categorised by species"
   )
   
   legend_name <- legend_title_map[[color_col]]
@@ -151,10 +151,10 @@ make_one_plot <- function(dt, indicator_name, color_col, color_scale) {
     
     labs(title = indicator_name) +
     theme_minimal(base_size = 12) +
-    theme(legend.position = "bottom",
+    theme(legend.position = "right",
           legend.box = "horizontal",
-          legend.title = element_text(size = 10),
-          legend.text = element_text(size = 9))
+          legend.title = element_text(size = 11),
+          legend.text = element_text(size = 11))
   
   return(p)
 }
@@ -172,10 +172,10 @@ plot_indicator_panels <- function(dt, color_col, color_scale, outfile) {
   # 多图合并，统一图例
   fig <- wrap_plots(plots, ncol = 2, guides = "collect") +
     plot_layout(guides = "collect") +
-    plot_annotation(theme = theme(legend.position = "bottom",
+    plot_annotation(theme = theme(legend.position = "right",
                                   legend.box = "horizontal"))
   
-  ggsave(outfile, fig, width = 8, height = 13, dpi = 300)
+  ggsave(outfile, fig, width = 10, height = 12, dpi = 300)
 }
 
 
