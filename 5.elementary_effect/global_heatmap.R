@@ -78,5 +78,6 @@ ht_list <- Reduce("+", plots)
 # 绘图并保存
 png("figures/heatmap/combined_heatmap_test.png",
     width = 6000, height = 12000, res = 300)
-draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE)
+draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE,
+     padding = unit(c(2, 8, 2, 2), "cm"))
 dev.off()
