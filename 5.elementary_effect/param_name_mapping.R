@@ -16,8 +16,8 @@ sp_names <- c(
   "sp17" = "MPHY",  # Micro-phytoplanktons
   "sp18" = "HF",    # Heterotrophic Flagellates
   "sp19" = "MZP",   # Micro-zooplanktons
-  "sp20" = "MeZP",  # Meso-zooplanktons
-  "sp21" = "MaZP",  # Macro-zooplanktons
+  "sp20" = "MEZP",  # Meso-zooplanktons
+  "sp21" = "MAZP",  # Macro-zooplanktons
   "sp22" = "MB",    # Meio-benthos
   "sp23" = "DFB",   # Deposit-feeding benthos
   "sp24" = "SFB",   # Suspension-feeding benthos
@@ -146,7 +146,7 @@ mapping[, c("param_process", "param_order") := get_process_and_order(param_name)
         by = param_name]
 
 # ------------ 导出 CSV ------------
-# fwrite(mapping, "5.elementary_effect/param_name_map.csv")
+fwrite(mapping, "5.elementary_effect/param_name_map.csv")
 
 # 示例输出
 # print(mapping)
