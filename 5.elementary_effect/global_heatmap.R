@@ -31,8 +31,13 @@ for(ind in indicators){
   catch_part <- sub(".*catchability\\.([^\\.]+)\\..*","\\1",EE_stats$param_label[is_spcat])
   EE_stats$param_species2[is_spcat] <- paste0(EE_stats$param_species[is_spcat],".",catch_part)
   
+  # 得到不带物种名的参数名
+  EE_stats$param_clean <- gsub("\\.[A-Z]{2,}", "", EE_stats$param_label)
+
+
+  # 拼接新的行标签
   EE_stats$param_newlabel <- paste0(
-    EE_stats$param_species2,"-",substr(EE_stats$param_type,1,4),"-",EE_stats$param_order
+    EE_stats$param_species2, ".", EE_stats$param_clean
   )
   
   # 构建热图矩阵
@@ -71,7 +76,7 @@ for(ind in indicators){
 ht_list <- Reduce("+", plots)
 
 # 绘图并保存
-png("figures/heatmap/combined_heatmap_complex_individual_legends_test.png",
-    width = 4000, height = 8000, res = 300)
+png("figures/heatmap/combined_heatmap_test.png",
+    width = 6000, height = 12000, res = 300)
 draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE)
 dev.off()
