@@ -8,6 +8,7 @@ library(viridis)
 # ----------准备---------- 
 #物种映射 
 sp_names <- c( "sp0" = "SYC", "sp1" = "MUR", "sp2" = "BIB", "sp3" = "WHG", "sp4" = "POD", "sp5" = "COD", "sp6" = "LYY", "sp7" = "SOL", "sp8" = "PLE", "sp9" = "HOM", "sp10" = "MAC", "sp11" = "HER", "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC" ) 
+sp_selected <- c("HER","WHG","SYC","POD","SQZ","BIB","HOM","CTC")
 # 指标 
 indicators <- c("biomass", "yield", "mean_TL", "LFI", "mean_length")
 
@@ -39,6 +40,10 @@ for(ind in indicators){
   EE_stats$param_newlabel <- paste0(
     EE_stats$param_species2, ".", EE_stats$param_clean
   )
+  
+  # 做半截图时，选取效应高的物种
+  EE_stats <- EE_stats %>%
+    filter(param_species2 %in% sp_selected)
   
   # 构建热图矩阵
   heat_mat <- dcast(EE_stats, param_newlabel ~ species, value.var="mu_star")
@@ -80,8 +85,15 @@ for(ind in indicators){
 ht_list <- Reduce("+", plots)
 
 # 绘图并保存
-png("figures/heatmap/combined_heatmap_complete.png",
-    width = 6000, height = 12000, res = 300)
+# 全图
+# png("figures/heatmap/combined_heatmap_complete.png",
+#     width = 6000, height = 14000, res = 300)
+# draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE,
+#      padding = unit(c(2, 8, 2, 2), "cm"))
+
+# 半图
+png("figures/heatmap/combined_heatmap_selected_sp.png",
+    width = 6000, height = 7000, res = 300)
 draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE,
      padding = unit(c(2, 8, 2, 2), "cm"))
 dev.off()
