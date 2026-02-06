@@ -65,7 +65,11 @@ for(ind in indicators){
     column_title_side = "top",         
     heatmap_legend_param = list(
       direction = "horizontal",
-      title_position = "topcenter"
+      title_position = "topcenter",
+      title_gp  = gpar(fontsize = 14, fontface = "bold"),
+      labels_gp = gpar(fontsize = 12),
+      legend_width  = unit(6, "cm"),
+      legend_height = unit(1.2, "cm")
     )
   )
   
@@ -76,7 +80,7 @@ for(ind in indicators){
 ht_list <- Reduce("+", plots)
 
 # 绘图并保存
-png("figures/heatmap/combined_heatmap_test.png",
+png("figures/heatmap/combined_heatmap_complete.png",
     width = 6000, height = 12000, res = 300)
 draw(ht_list, heatmap_legend_side = "bottom", merge_legends = FALSE,
      padding = unit(c(2, 8, 2, 2), "cm"))
