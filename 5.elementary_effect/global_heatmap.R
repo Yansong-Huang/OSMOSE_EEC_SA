@@ -8,7 +8,7 @@ library(viridis)
 # ----------准备---------- 
 #物种映射 
 sp_names <- c( "sp0" = "SYC", "sp1" = "MUR", "sp2" = "BIB", "sp3" = "WHG", "sp4" = "POD", "sp5" = "COD", "sp6" = "LYY", "sp7" = "SOL", "sp8" = "PLE", "sp9" = "HOM", "sp10" = "MAC", "sp11" = "HER", "sp12" = "PIL", "sp13" = "SQZ", "sp14" = "CTC", "sp15" = "RJC" ) 
-sp_selected <- c("HER","WHG","SYC","POD","SQZ","BIB","HOM","CTC")
+sp_selected <- c("HER","WHG","SYC","POD","RJC","COD","HOM","MUR")
 # 指标 
 indicators <- c("biomass", "yield", "mean_TL", "LFI", "mean_length")
 
