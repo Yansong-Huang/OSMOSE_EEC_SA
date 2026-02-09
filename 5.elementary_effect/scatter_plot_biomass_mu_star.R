@@ -1,5 +1,32 @@
 library(data.table)
 library(ggplot2)
+library(dplyr)
+
+read_add_indicator <- function(path, indicator_name) {
+  dt <- fread(path)
+  dt[, indicator := indicator_name]
+  return(dt)
+}
+
+EE_all <- rbindlist(list(
+  read_add_indicator("5.elementary_effect/EE_outputs/EE_biomass_total_biomass.csv",    "Total Biomass"),
+  read_add_indicator("5.elementary_effect/EE_outputs/EE_yield_total_yield.csv",        "Total Yield"),
+  read_add_indicator("5.elementary_effect/EE_outputs/EE_LFI40_stats.csv",              "LFI40"),
+  read_add_indicator("5.elementary_effect/EE_outputs/EE_meanLength_stats.csv",         "Mean Length"),
+  read_add_indicator("5.elementary_effect/EE_outputs/EE_meanTL_stats.csv",             "Mean Trophic Level")
+), use.names = TRUE, fill = TRUE)
+
+# ---------- 合并 param_type 和 param_label ----------
+mapping <- fread("5.elementary_effect/param_name_map.csv")
+EE_all <- merge(EE_all, mapping, by = "param_name", all.x = TRUE)
+
+
+# 确保是 data.table 或 data.frame
+dt <- as.data.table(EE_all)
+
+dt <- dt %>%
+  filter(indicator=="Total Biomass")
+
 
 # ========== 1️⃣ 排除 fleet / resource ==========
 dt_sp <- dt[!(param_species %in% c("fleet", "resource"))]
@@ -47,15 +74,9 @@ ggplot(plot_dt, aes(x = mean_biomass, y = mean_mu_star, label = param_species)) 
   geom_point(size = 3, color = "#377EB8") +
   geom_text(vjust = -0.6, size = 3) +
   scale_x_log10(name = "Mean species biomass (log scale)") +
-  scale_y_log10(name = expression(mean(mu^"*")~"(log scale)")) +
+  scale_y_log10(name = "Effect magnitude (log scale)") +
   theme_bw() +
   theme(
     panel.grid.minor = element_blank()
   )
 
-ggplot(plot_dt, aes(x = reorder(param_species, mean_mu_star), y = mean_mu_star)) +
-  geom_point(size = 3, color = "#377EB8") +
-  coord_flip() +
-  ylab(expression(mean(mu^"*"))) +
-  xlab("Species (sorted by mean μ*)") +
-  theme_bw()
